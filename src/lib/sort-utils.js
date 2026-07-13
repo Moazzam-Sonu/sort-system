@@ -1,34 +1,16 @@
-export function extractRangeFromTitle(title) {
-  const parts = title.split('|');
-
-  if (parts.length > 1) {
-    const extracted = parts.at(-1)?.trim();
-    if (extracted) {
-      return extracted;
-    }
-  }
-
-  return title.trim();
-}
-
 export function extractSortableTitle(title) {
   return title.split('|')[0]?.trim() ?? title.trim();
 }
 
-export function getRangeValue(product) {
-  const metafieldValue = product.metafield?.value?.trim();
-  if (metafieldValue) {
-    return metafieldValue;
-  }
-
-  return extractRangeFromTitle(product.title);
+export function findProductsMissingRange(products) {
+  return products.filter((product) => !product.metafield?.value?.trim());
 }
 
 export function buildSortedProducts(products) {
   return products
     .map((product, originalIndex) => ({
       ...product,
-      range: getRangeValue(product),
+      range: product.metafield.value.trim(),
       sortableTitle: extractSortableTitle(product.title),
       originalIndex,
     }))

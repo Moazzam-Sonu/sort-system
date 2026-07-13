@@ -17,6 +17,7 @@ import {
   arraysEqual,
   buildMoveBatch,
   buildSortedProducts,
+  findProductsMissingRange,
 } from './lib/sort-utils.js';
 
 // Change only this value when you want to sort a different collection.
@@ -108,6 +109,23 @@ function formatUserErrors(userErrors) {
       return fieldPath ? `${fieldPath}: ${error.message}` : error.message;
     })
     .join('; ');
+}
+
+function formatMissingRangeError(productsMissingRange) {
+  const preview = productsMissingRange
+    .slice(0, 10)
+    .map((product) => `${product.title} (${product.id})`)
+    .join('; ');
+
+  const suffix = productsMissingRange.length > 10
+    ? `; and ${productsMissingRange.length - 10} more`
+    : '';
+
+  return [
+    `Found ${productsMissingRange.length} product(s) with empty custom.range metafield.`,
+    'This script now sorts by metafield only and will not use the title as a fallback.',
+    `Examples: ${preview}${suffix}`,
+  ].join(' ');
 }
 
 async function fetchAllCollectionProducts(client, collectionId) {
@@ -272,6 +290,11 @@ async function main() {
   await ensureManualSortOrder(client, COLLECTION_ID, sortOrder);
 
   console.log('Sorting...');
+
+  const productsMissingRange = findProductsMissingRange(products);
+  if (productsMissingRange.length > 0) {
+    throw new Error(formatMissingRangeError(productsMissingRange));
+  }
 
   const sortedProducts = buildSortedProducts(products);
   const currentOrder = products.map((product) => product.id);
