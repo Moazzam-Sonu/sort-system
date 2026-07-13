@@ -1,0 +1,16 @@
+{
+  "name": "shopify-collection-range-sorter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reorder a single Shopify collection by custom.range metafield or title-derived range.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/reorder-collection.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}
