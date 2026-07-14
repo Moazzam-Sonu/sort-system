@@ -212,6 +212,9 @@ export function createRuleBuilder({ onRulesChange }) {
       row.append(remove);
       ruleList.append(row);
     });
+    document.querySelectorAll('.preset-button').forEach((button) => {
+      button.disabled = false;
+    });
     addRuleButton.disabled = rules.length >= 4;
     openMetafieldButton.disabled = rules.length >= 4;
     updatePresetState();

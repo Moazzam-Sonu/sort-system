@@ -12,7 +12,7 @@ import { apiRouter } from './routes/api-routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT) || 3000;
-const host = process.env.HOST?.trim() || '127.0.0.1';
+const host = process.env.HOST?.trim() || '0.0.0.0';
 const app = express();
 
 app.set('trust proxy', 1);

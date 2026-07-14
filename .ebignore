@@ -1,0 +1,7 @@
+.env
+.git/
+node_modules/
+*.zip
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

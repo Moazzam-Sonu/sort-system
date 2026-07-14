@@ -31,6 +31,15 @@ The command prompts for the password and stores only a salted `scrypt` hash in N
 npm start
 ```
 
+## Elastic Beanstalk
+
+1. In Elastic Beanstalk, create a **Node.js 20** environment with one instance.
+2. Upload `collection-sorter-elastic-beanstalk.zip` from this project folder.
+3. Add `SHOPIFY_STORE`, `SHOPIFY_ACCESS_TOKEN`, `DATABASE_URL`, `APP_SESSION_HOURS=12`, and `NODE_ENV=production` in **Configuration > Updates, monitoring, and logging > Environment properties**.
+4. Do not add `PORT`; Elastic Beanstalk supplies it automatically. The app now listens on `0.0.0.0` by default.
+
+The ZIP deliberately excludes `.env`, `node_modules`, and `.git`. Elastic Beanstalk installs dependencies from `package-lock.json` during deployment.
+
 The app runs database migrations automatically on startup. To run them manually, use `npm run db:migrate`.
 
 ## Operational limits
