@@ -54,6 +54,7 @@ let previewKey = null;
 
 const presets = {
   'range-title': [{ field: 'RANGE', direction: 'ASC' }, { field: 'TITLE', direction: 'ASC' }],
+  'range-best-selling': [{ field: 'RANGE', direction: 'ASC' }, { field: 'BEST_SELLING', direction: 'ASC' }],
   title: [{ field: 'TITLE', direction: 'ASC' }],
   price: [{ field: 'PRICE', direction: 'ASC' }],
   newest: [{ field: 'CREATED_AT', direction: 'DESC' }],
@@ -262,6 +263,7 @@ function toggleCollection(collection) {
 }
 
 function getDirectionOptions(rule) {
+  if (rule.field === 'BEST_SELLING') return [{ value: 'ASC', label: 'Best selling first' }, { value: 'DESC', label: 'Best selling last' }];
   const type = ruleType(rule);
   if (type === 'date') return [{ value: 'ASC', label: 'Oldest first' }, { value: 'DESC', label: 'Newest first' }];
   if (type === 'number') return [{ value: 'ASC', label: 'Low to high' }, { value: 'DESC', label: 'High to low' }];
@@ -299,26 +301,44 @@ function renderRules() {
     const fieldSelect = document.createElement('select');
     fieldSelect.className = 'rule-select';
     fieldSelect.setAttribute('aria-label', `Rule ${index + 1} field`);
-    for (const [field, details] of Object.entries(ruleFields)) {
-      if (field === 'METAFIELD') continue;
-      const option = document.createElement('option');
-      option.value = field;
-      option.textContent = details.label;
-      option.selected = field === rule.field;
-      fieldSelect.append(option);
-    }
+    const rangeGroup = document.createElement('optgroup');
+    rangeGroup.label = 'Custom metafields';
+    const rangeOption = document.createElement('option');
+    rangeOption.value = 'RANGE';
+    rangeOption.textContent = ruleFields.RANGE.label;
+    rangeOption.selected = rule.field === 'RANGE';
+    rangeGroup.append(rangeOption);
     if (customMetafields.length > 0) {
-      const customGroup = document.createElement('optgroup');
-      customGroup.label = 'Your custom metafields';
       for (const metafield of customMetafields) {
         const option = document.createElement('option');
         option.value = customMetafieldId(metafield);
         option.textContent = metafield.label || `${metafield.namespace}.${metafield.key}`;
         option.selected = rule.field === 'METAFIELD' && customMetafieldId(rule.metafield) === option.value;
-        customGroup.append(option);
+        rangeGroup.append(option);
       }
-      fieldSelect.append(customGroup);
     }
+    fieldSelect.append(rangeGroup);
+
+    const rankingGroup = document.createElement('optgroup');
+    rankingGroup.label = 'Shopify rankings';
+    const bestSellingOption = document.createElement('option');
+    bestSellingOption.value = 'BEST_SELLING';
+    bestSellingOption.textContent = ruleFields.BEST_SELLING.label;
+    bestSellingOption.selected = rule.field === 'BEST_SELLING';
+    rankingGroup.append(bestSellingOption);
+    fieldSelect.append(rankingGroup);
+
+    const productGroup = document.createElement('optgroup');
+    productGroup.label = 'Product details';
+    for (const [field, details] of Object.entries(ruleFields)) {
+      if (field === 'METAFIELD' || field === 'RANGE' || field === 'BEST_SELLING') continue;
+      const option = document.createElement('option');
+      option.value = field;
+      option.textContent = details.label;
+      option.selected = field === rule.field;
+      productGroup.append(option);
+    }
+    fieldSelect.append(productGroup);
     const addMetafieldOption = document.createElement('option');
     addMetafieldOption.value = '__ADD_METAFIELD__';
     addMetafieldOption.textContent = '+ Add custom metafield...';
@@ -395,6 +415,7 @@ function showMetafieldFormError(message) {
 
 function formatValue(rule, value) {
   if (value === null || value === undefined || value === '') return 'Empty';
+  if (rule.field === 'BEST_SELLING') return `Rank #${Number(value).toLocaleString()}`;
   if (ruleType(rule) === 'date') return new Date(value).toLocaleDateString();
   if (ruleType(rule) === 'number') return Number(value).toLocaleString();
   return value;

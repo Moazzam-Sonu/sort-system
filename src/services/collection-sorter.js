@@ -76,6 +76,17 @@ const UPDATE_COLLECTION_SORT_ORDER_MUTATION = `
   }
 `;
 
+const GET_BEST_SELLING_RANKS_QUERY = `
+  query GetBestSellingRanks($id: ID!, $first: Int!, $after: String) {
+    collection(id: $id) {
+      products(first: $first, after: $after, sortKey: BEST_SELLING) {
+        nodes { id }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
+
 const REORDER_COLLECTION_PRODUCTS_MUTATION = `
   mutation ReorderCollectionProducts($id: ID!, $moves: [MoveInput!]!, $idempotencyKey: String!) {
     collectionReorderProducts(id: $id, moves: $moves) @idempotent(key: $idempotencyKey) {
@@ -102,6 +113,7 @@ export const RULE_FIELDS = {
   PRICE: { label: 'Price', type: 'number', description: 'Lowest variant price' },
   CREATED_AT: { label: 'Created Date', type: 'date', description: 'Product creation date' },
   INVENTORY: { label: 'Inventory', type: 'number', description: 'Total inventory quantity' },
+  BEST_SELLING: { label: 'Best Selling', type: 'number', description: 'Shopify best-selling rank' },
   METAFIELD: { label: 'Custom metafield', type: 'text', description: 'A metafield you add by namespace and key' },
 };
 
@@ -211,6 +223,7 @@ function getRuleValue(product, rule) {
       return Number.isFinite(value) ? value : null;
     }
     case 'INVENTORY': return Number.isFinite(product.totalInventory) ? product.totalInventory : null;
+    case 'BEST_SELLING': return Number.isFinite(product.bestSellingRank) ? product.bestSellingRank : null;
     case 'METAFIELD': {
       const rawValue = product.customMetafields?.[rule.id];
       if (!rawValue?.trim()) return null;
@@ -340,8 +353,37 @@ async function fetchAllCollectionProducts(client, collectionId, rules, log = () 
         product[`customMetafield${index}`]?.value ?? null,
       ])),
     })));
-    if (!collection.products.pageInfo.hasNextPage) return { collectionTitle, sortOrder, products };
+    if (!collection.products.pageInfo.hasNextPage) {
+      if (rules.some((rule) => rule.field === 'BEST_SELLING')) {
+        const ranks = await fetchBestSellingRanks(client, collectionId, log);
+        for (const product of products) {
+          product.bestSellingRank = ranks.get(product.id) ?? null;
+        }
+      }
+      return { collectionTitle, sortOrder, products };
+    }
     after = collection.products.pageInfo.endCursor;
+  }
+}
+
+async function fetchBestSellingRanks(client, collectionId, log) {
+  const ranks = new Map();
+  let after = null;
+  let position = 0;
+  log('Fetching Shopify best-selling ranks...');
+  while (true) {
+    const response = await client.request({
+      query: GET_BEST_SELLING_RANKS_QUERY,
+      variables: { id: collectionId, first: PAGE_SIZE, after },
+    });
+    const connection = response.data?.collection?.products;
+    if (!connection) throw new Error('Best-selling ranks could not be fetched from Shopify.');
+    for (const product of connection.nodes) {
+      position += 1;
+      ranks.set(product.id, position);
+    }
+    if (!connection.pageInfo.hasNextPage) return ranks;
+    after = connection.pageInfo.endCursor;
   }
 }
 

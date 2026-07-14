@@ -144,6 +144,13 @@
             >
               Range, then title
             </button>
+            <button
+              class="preset-button"
+              type="button"
+              data-preset="range-best-selling"
+            >
+              Range, then best selling
+            </button>
             <button class="preset-button" type="button" data-preset="title">
               Title A-Z
             </button>
@@ -194,13 +201,15 @@
           </button>
         </div>
 
-        <details class="native-sort">
-          <summary>Need a Shopify native sort instead?</summary>
+        <section class="native-sort">
           <div class="native-sort-content">
-            <p>
-              Use Best Selling or Shopify's built-in price, date, and
-              alphabetical sorts. These cannot be combined with custom rules.
-            </p>
+            <div>
+              <p class="native-sort-label">SHOPIFY NATIVE SORT</p>
+              <p>
+                Use Best Selling or Shopify's built-in price, date, and
+                alphabetical sorts. These cannot be combined with custom rules.
+              </p>
+            </div>
             <select id="native-sort-select" aria-label="Shopify native sort">
               <option value="">Choose a Shopify sort...</option>
             </select>
@@ -213,7 +222,7 @@
               Apply native sort
             </button>
           </div>
-        </details>
+        </section>
 
         <section
           id="preview-panel"

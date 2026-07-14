@@ -149,10 +149,10 @@ button:disabled { cursor: not-allowed; }
 .sort-button.is-busy { pointer-events: none; }
 .sort-button.is-busy svg { animation: spin 1s linear infinite; }
 .native-sort { margin-top: 1.2rem; color: var(--muted); border-top: 1px solid var(--line); }
-.native-sort summary { padding-top: 1rem; color: #4a5a70; font-size: .78rem; font-weight: 700; cursor: pointer; }
-.native-sort summary::marker { color: var(--accent); }
-.native-sort-content { display: flex; align-items: center; gap: .6rem; padding-top: .7rem; }
-.native-sort-content p { flex: 1; min-width: 180px; margin: 0; font-size: .73rem; line-height: 1.45; }
+.native-sort-content { display: flex; align-items: center; gap: .6rem; padding-top: 1rem; }
+.native-sort-content > div { flex: 1; min-width: 180px; }
+.native-sort-content p { margin: 0; font-size: .73rem; line-height: 1.45; }
+.native-sort-content .native-sort-label { margin-bottom: .22rem; color: var(--accent); font-family: "DM Mono", monospace; font-size: .62rem; font-weight: 500; letter-spacing: .09em; }
 .native-sort-content select { height: 38px; min-width: 195px; padding: 0 .55rem; color: var(--ink); background: var(--cream); border: 1px solid var(--line); border-radius: 7px; }
 .native-apply-button { height: 38px; padding: 0 .75rem; color: var(--ink); font-size: .74rem; font-weight: 700; background: #edf1f6; border: 1px solid #cbd5e2; border-radius: 7px; }
 .native-apply-button:hover:not(:disabled) { background: #e0e8f1; }
