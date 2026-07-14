@@ -1,6 +1,6 @@
 import { SORT_OPTIONS } from '../constants/sorting.js';
 import { applyCustomRules, applySort, previewCustomRules } from '../services/collection-sorter.js';
-import { hasActiveBulkJob, startBulkJob } from '../services/bulk-job-manager.js';
+import { isActiveBulkJobConflict, startBulkJob } from '../services/bulk-job-manager.js';
 import { createLogCollector } from '../utils/request-logs.js';
 import { normalizeCollectionIds } from '../validators/collection-ids.js';
 
@@ -32,7 +32,7 @@ export async function applyRules(request, response) {
   }
 }
 
-export function queueCustomRules(request, response) {
+export async function queueCustomRules(request, response) {
   const { collectionIds, rules, confirmed } = request.body ?? {};
   if (confirmed !== true) {
     response.status(400).json({ error: 'Confirm the preview before applying a custom order.' });
@@ -40,9 +40,9 @@ export function queueCustomRules(request, response) {
   }
   try {
     const ids = normalizeCollectionIds(collectionIds);
-    if (hasActiveBulkJob()) return sendBusyResponse(response);
-    response.status(202).json({ job: startBulkJob({ collectionIds: ids, action: { type: 'custom', rules } }) });
+    response.status(202).json({ job: await startBulkJob({ collectionIds: ids, action: { type: 'custom', rules } }) });
   } catch (error) {
+    if (isActiveBulkJobConflict(error)) return sendBusyResponse(response);
     response.status(400).json({ error: error.message });
   }
 }
@@ -57,7 +57,7 @@ export async function applyNativeSort(request, response) {
   }
 }
 
-export function queueNativeSort(request, response) {
+export async function queueNativeSort(request, response) {
   const { collectionIds, sortOrder, confirmed } = request.body ?? {};
   if (confirmed !== true) {
     response.status(400).json({ error: 'Confirm the sort before applying it to multiple collections.' });
@@ -66,9 +66,9 @@ export function queueNativeSort(request, response) {
   try {
     const ids = normalizeCollectionIds(collectionIds);
     if (!SORT_OPTIONS[sortOrder]) throw new Error('Invalid sorting option selected.');
-    if (hasActiveBulkJob()) return sendBusyResponse(response);
-    response.status(202).json({ job: startBulkJob({ collectionIds: ids, action: { type: 'native', sortOrder } }) });
+    response.status(202).json({ job: await startBulkJob({ collectionIds: ids, action: { type: 'native', sortOrder } }) });
   } catch (error) {
+    if (isActiveBulkJobConflict(error)) return sendBusyResponse(response);
     response.status(400).json({ error: error.message });
   }
 }

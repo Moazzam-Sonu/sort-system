@@ -23,6 +23,7 @@ const feedback = createFeedback();
 
 let sortOptions = {};
 let previewKey = null;
+let activeBulkJobId = null;
 
 function userInitials(username) {
   return username
@@ -144,9 +145,14 @@ async function pollBulkJob(jobId, label) {
       window.setTimeout(() => { void pollBulkJob(jobId, label); }, 1500);
       return;
     }
+    activeBulkJobId = null;
     feedback.showResult({
-      failed: job.status === 'failed',
-      title: job.status === 'completed' ? 'Batch sorting completed' : 'Batch sorting finished with issues',
+      failed: job.status === 'failed' || job.status === 'cancelled',
+      title: job.status === 'completed'
+        ? 'Batch sorting completed'
+        : job.status === 'cancelled'
+          ? 'Batch sorting cancelled'
+          : 'Batch sorting finished with issues',
       summary: `${job.changed.toLocaleString()} collections changed, ${job.unchanged.toLocaleString()} already in order, and ${job.failed.toLocaleString()} failed.`,
     });
   } catch (error) {
@@ -158,6 +164,7 @@ async function startBulkSort({ request, label }) {
   feedback.showBatchLoading(label);
   try {
     const { job } = await request();
+    activeBulkJobId = job.id;
     feedback.renderBatchProgress(job, label);
     void pollBulkJob(job.id, label);
   } catch (error) {
@@ -255,6 +262,28 @@ logoutButton.addEventListener('click', async () => {
     await api.logout();
   } finally {
     window.location.assign('/login');
+  }
+});
+
+feedback.cancelBulkButton.addEventListener('click', async () => {
+  if (!activeBulkJobId) return;
+  const confirmed = await confirmSorting({
+    title: 'Cancel batch sorting?',
+    message: 'The collection currently being updated may finish, but no further collections will be processed.',
+    confirmText: 'Cancel batch',
+  });
+  if (!confirmed) return;
+
+  feedback.setButtonBusy(feedback.cancelBulkButton, true, 'Cancelling...', 'Cancel batch');
+  try {
+    const { job } = await api.cancelBulkJob(activeBulkJobId);
+    feedback.renderBatchProgress(job, 'Batch sorting');
+    activeBulkJobId = null;
+  } catch (error) {
+    feedback.showResult({ failed: true, title: 'Batch could not be cancelled', summary: error.message });
+  } finally {
+    feedback.cancelBulkButton.classList.remove('is-busy');
+    feedback.cancelBulkButton.querySelector('span').textContent = 'Cancel batch';
   }
 });
 applyNativeButton.addEventListener('click', async () => {

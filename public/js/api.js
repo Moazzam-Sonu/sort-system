@@ -31,4 +31,5 @@ export const api = {
   applyNative: (body) => post('/api/sort', body),
   applyNativeBulk: (body) => post('/api/sort/bulk-apply', body),
   bulkJob: (jobId) => request(`/api/bulk-jobs/${jobId}`),
+  cancelBulkJob: (jobId) => post(`/api/bulk-jobs/${jobId}/cancel`),
 };

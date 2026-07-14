@@ -44,7 +44,8 @@ The app runs database migrations automatically on startup. To run them manually,
 
 ## Operational limits
 
-- Run exactly one application instance. Multiple instances do not share bulk-job state.
+- Bulk-job progress and item failures are stored in Neon. A restart or deployment resumes an unfinished batch after its worker lease expires (up to 20 minutes).
+- Only one batch can be active at a time, even if more than one app instance is running.
 - Do not enable automatic sleeping or restarts while a batch sort is running.
 - Use HTTPS from your hosting provider. The session cookie is marked `Secure` when `NODE_ENV=production`.
 - User sessions are opaque random tokens; Neon stores only their SHA-256 hashes.

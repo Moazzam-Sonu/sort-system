@@ -18,6 +18,7 @@ export function createFeedback() {
   const bulkStatus = document.querySelector('#bulk-progress-status');
   const bulkBar = document.querySelector('#bulk-progress-bar');
   const bulkErrors = document.querySelector('#bulk-progress-errors');
+  const cancelBulkButton = document.querySelector('#cancel-bulk-button');
 
   document.querySelector('#close-result').addEventListener('click', () => { resultPanel.hidden = true; });
 
@@ -160,6 +161,9 @@ export function createFeedback() {
       bulkErrors.append(line);
     }
     bulkErrors.hidden = !job.errors?.length;
+    const isActive = ['queued', 'running'].includes(job.status);
+    cancelBulkButton.hidden = !isActive;
+    cancelBulkButton.disabled = !isActive;
   }
 
   function showBatchLoading(label) {
@@ -172,16 +176,21 @@ export function createFeedback() {
     bulkStatus.classList.remove('is-neutral');
     bulkBar.style.width = '34%';
     bulkErrors.hidden = true;
+    cancelBulkButton.hidden = true;
+    cancelBulkButton.disabled = true;
   }
 
   function hideBatch() {
     bulkPanel.hidden = true;
     bulkPanel.classList.remove('is-loading');
     bulkPanel.removeAttribute('aria-busy');
+    cancelBulkButton.hidden = true;
+    cancelBulkButton.disabled = true;
   }
 
   return {
     applyButton,
+    cancelBulkButton,
     hidePreview,
     showPreviewLoading,
     showPreview,

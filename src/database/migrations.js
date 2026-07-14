@@ -65,6 +65,19 @@ const migrations = [
       'CREATE INDEX IF NOT EXISTS app_users_active_idx ON app_users(username) WHERE is_active = TRUE',
     ],
   },
+  {
+    id: '003_persist_bulk_jobs',
+    statements: [
+      'ALTER TABLE sort_jobs ADD COLUMN IF NOT EXISTS worker_id UUID',
+      'ALTER TABLE sort_jobs ADD COLUMN IF NOT EXISTS lease_expires_at TIMESTAMPTZ',
+      'ALTER TABLE sort_jobs ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ',
+      'ALTER TABLE sort_jobs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ',
+      'ALTER TABLE sort_job_items ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0',
+      'CREATE INDEX IF NOT EXISTS sort_jobs_lease_idx ON sort_jobs(status, lease_expires_at)',
+      'CREATE INDEX IF NOT EXISTS sort_job_items_pending_idx ON sort_job_items(job_id, status, position)',
+      "CREATE UNIQUE INDEX IF NOT EXISTS sort_jobs_one_active_idx ON sort_jobs ((1)) WHERE status IN ('queued', 'running')",
+    ],
+  },
 ];
 
 export async function runMigrations() {

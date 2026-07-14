@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { verifyDatabaseConnection } from './database/client.js';
 import { runMigrations } from './database/migrations.js';
+import { resumePendingBulkJobs } from './services/bulk-job-manager.js';
 import { invalidJsonHandler, unhandledErrorHandler } from './middleware/error-handler.js';
 import { requireAuth } from './middleware/require-auth.js';
 import { authRouter } from './routes/auth-routes.js';
@@ -34,7 +35,9 @@ app.use(unhandledErrorHandler);
 async function startServer() {
   const databaseName = await verifyDatabaseConnection();
   await runMigrations();
+  const resumedJobs = await resumePendingBulkJobs();
   console.log(`Neon database connected: ${databaseName}`);
+  if (resumedJobs > 0) console.log(`Scheduled ${resumedJobs} persisted bulk job(s) for recovery.`);
 
   app.listen(port, host, () => {
     console.log(`Shopify Collection Sorter is running at http://${host}:${port}`);
