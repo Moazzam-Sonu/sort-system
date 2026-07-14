@@ -1,6 +1,6 @@
 export const UPDATE_COLLECTION_SORT_ORDER_MUTATION = `
-  mutation CollectionUpdateSortOrder($collection: CollectionUpdateInput!) {
-    collectionUpdate(collection: $collection) {
+  mutation CollectionUpdateSortOrder($input: CollectionInput!) {
+    collectionUpdate(input: $input) {
       collection { id sortOrder }
       job { id done }
       userErrors { field message }

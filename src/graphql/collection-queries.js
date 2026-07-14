@@ -27,7 +27,7 @@ export function buildCollectionProductsQuery(customMetafields) {
         id
         title
         sortOrder
-        products(first: $first, after: $after) {
+        products(first: $first, after: $after, query: "status:active,draft") {
           nodes {
             id
             title
@@ -50,7 +50,7 @@ export function buildCollectionProductsQuery(customMetafields) {
 export const GET_BEST_SELLING_RANKS_QUERY = `
   query GetBestSellingRanks($id: ID!, $first: Int!, $after: String) {
     collection(id: $id) {
-      products(first: $first, after: $after, sortKey: BEST_SELLING) {
+      products(first: $first, after: $after, sortKey: BEST_SELLING, query: "status:active,draft") {
         nodes { id }
         pageInfo { hasNextPage endCursor }
       }

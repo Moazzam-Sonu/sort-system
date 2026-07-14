@@ -12,7 +12,7 @@ import { waitForJob } from './shopify-jobs.js';
 export async function updateSortOrder(client, collectionId, sortOrder) {
   const response = await client.request({
     query: UPDATE_COLLECTION_SORT_ORDER_MUTATION,
-    variables: { collection: { id: collectionId, sortOrder } },
+    variables: { input: { id: collectionId, sortOrder } },
   });
   const payload = response.data?.collectionUpdate;
   const userErrors = payload?.userErrors ?? [];
