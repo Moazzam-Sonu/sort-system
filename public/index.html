@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#133737">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#133737" />
     <title>Collection Sorter</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="page-glow glow-one"></div>
@@ -15,7 +15,21 @@
       <header class="topbar">
         <a class="brand" href="/" aria-label="Collection Sorter home">
           <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none"><path d="M9 8h14M9 16h10M9 24h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="m21 20 3 3 5-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 32 32" fill="none">
+              <path
+                d="M9 8h14M9 16h10M9 24h6"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <path
+                d="m21 20 3 3 5-6"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </span>
           <span>Collection <strong>Sorter</strong></span>
         </a>
@@ -25,7 +39,10 @@
       <section class="intro">
         <p class="eyebrow">SHOPIFY COLLECTION MANAGER</p>
         <h1>Put every collection in its <em>perfect order.</em></h1>
-        <p class="intro-copy">Choose a collection, pick the right sorting method, and update your Shopify storefront in a few clicks.</p>
+        <p class="intro-copy">
+          Choose a collection, pick the right sorting method, and update your
+          Shopify storefront in a few clicks.
+        </p>
       </section>
 
       <section class="sort-workspace" aria-labelledby="workspace-title">
@@ -34,26 +51,75 @@
             <p class="step-label">STEP 01</p>
             <h2 id="workspace-title">Choose a collection</h2>
           </div>
-            <p id="collection-status" class="collection-status" role="status">Loading collections...</p>
+          <p id="collection-status" class="collection-status" role="status">
+            Loading collections...
+          </p>
         </div>
 
         <div class="picker-wrap">
-          <div id="collection-trigger" class="collection-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-disabled="true" aria-label="Choose collections">
+          <div
+            id="collection-trigger"
+            class="collection-trigger"
+            role="combobox"
+            tabindex="0"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-disabled="true"
+            aria-label="Choose collections"
+          >
             <span class="trigger-placeholder">Loading collections...</span>
-            <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path
+                d="m5 7 5 5 5-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </div>
 
           <div id="collection-picker" class="collection-picker" hidden>
             <div class="search-wrap">
-              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="4.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m12 12 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-              <input id="collection-search" type="search" autocomplete="off" placeholder="Search collections by name or handle...">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle
+                  cx="8.5"
+                  cy="8.5"
+                  r="4.75"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="m12 12 4.2 4.2"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <input
+                id="collection-search"
+                type="search"
+                autocomplete="off"
+                placeholder="Search collections by name or handle..."
+              />
             </div>
             <div class="picker-actions">
-              <button id="select-all-collections" type="button">Select all</button>
-              <button id="clear-collection-selection" type="button">Clear</button>
+              <button id="select-all-collections" type="button">
+                Select all
+              </button>
+              <button id="clear-collection-selection" type="button">
+                Clear
+              </button>
               <span id="picker-selection-count">0 selected</span>
             </div>
-            <div id="collection-list" class="collection-list" role="listbox" aria-label="Collections"></div>
+            <div
+              id="collection-list"
+              class="collection-list"
+              role="listbox"
+              aria-label="Collections"
+            ></div>
           </div>
         </div>
 
@@ -63,44 +129,98 @@
               <p class="step-label">STEP 02</p>
               <h2>Build your sorting rules</h2>
             </div>
-            <p class="hint">Each new rule sorts products with the same value from the rule above.</p>
+            <p class="hint">
+              Each new rule sorts products with the same value from the rule
+              above.
+            </p>
           </div>
 
           <div class="preset-row" aria-label="Rule presets">
             <span>Quick presets</span>
-            <button class="preset-button is-active" type="button" data-preset="range-title">Range, then title</button>
-            <button class="preset-button" type="button" data-preset="title">Title A-Z</button>
-            <button class="preset-button" type="button" data-preset="price">Price low to high</button>
-            <button class="preset-button" type="button" data-preset="newest">Newest first</button>
+            <button
+              class="preset-button is-active"
+              type="button"
+              data-preset="range-title"
+            >
+              Range, then title
+            </button>
+            <button class="preset-button" type="button" data-preset="title">
+              Title A-Z
+            </button>
+            <button class="preset-button" type="button" data-preset="price">
+              Price low to high
+            </button>
+            <button class="preset-button" type="button" data-preset="newest">
+              Newest first
+            </button>
           </div>
 
           <div id="rule-list" class="rule-list" aria-live="polite"></div>
           <div class="rule-actions">
-            <button id="add-rule-button" class="add-rule-button" type="button">+ Add another rule</button>
-            <button id="open-metafield-button" class="add-rule-button add-metafield-button" type="button">+ Add custom metafield</button>
+            <button id="add-rule-button" class="add-rule-button" type="button">
+              + Add another rule
+            </button>
+            <button
+              id="open-metafield-button"
+              class="add-rule-button add-metafield-button"
+              type="button"
+            >
+              + Add custom metafield
+            </button>
           </div>
         </div>
 
         <div class="action-row">
-          <p id="selection-summary">Select a collection to preview a custom order.</p>
-          <button id="preview-button" class="sort-button" type="button" disabled>
+          <p id="selection-summary">
+            Select a collection to preview a custom order.
+          </p>
+          <button
+            id="preview-button"
+            class="sort-button"
+            type="button"
+            disabled
+          >
             <span>Preview order</span>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path
+                d="M3 10h13M11 5l5 5-5 5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
         <details class="native-sort">
           <summary>Need a Shopify native sort instead?</summary>
           <div class="native-sort-content">
-            <p>Use Best Selling or Shopify's built-in price, date, and alphabetical sorts. These cannot be combined with custom rules.</p>
+            <p>
+              Use Best Selling or Shopify's built-in price, date, and
+              alphabetical sorts. These cannot be combined with custom rules.
+            </p>
             <select id="native-sort-select" aria-label="Shopify native sort">
               <option value="">Choose a Shopify sort...</option>
             </select>
-            <button id="apply-native-button" class="native-apply-button" type="button" disabled>Apply native sort</button>
+            <button
+              id="apply-native-button"
+              class="native-apply-button"
+              type="button"
+              disabled
+            >
+              Apply native sort
+            </button>
           </div>
         </details>
 
-        <section id="preview-panel" class="preview-panel" hidden aria-live="polite">
+        <section
+          id="preview-panel"
+          class="preview-panel"
+          hidden
+          aria-live="polite"
+        >
           <div class="preview-heading">
             <div>
               <p class="step-label">STEP 03</p>
@@ -113,20 +233,46 @@
           <div id="preview-warnings" class="preview-warnings"></div>
           <div class="preview-table-wrap">
             <table class="preview-table">
-              <thead><tr><th>New</th><th>Product</th><th>Current</th><th>Sorting values</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>New</th>
+                  <th>Product</th>
+                  <th>Current</th>
+                  <th>Sorting values</th>
+                </tr>
+              </thead>
               <tbody id="preview-products"></tbody>
             </table>
           </div>
           <div class="preview-footer">
             <p>Preview only. Shopify will not be changed until you confirm.</p>
-            <button id="apply-custom-button" class="sort-button apply-button" type="button" disabled>
+            <button
+              id="apply-custom-button"
+              class="sort-button apply-button"
+              type="button"
+              disabled
+            >
               <span>Confirm and apply</span>
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M3 10h13M11 5l5 5-5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
           </div>
         </section>
 
-        <section id="bulk-progress-panel" class="bulk-progress-panel" hidden aria-live="polite">
+        <section
+          id="bulk-progress-panel"
+          class="bulk-progress-panel"
+          hidden
+          aria-live="polite"
+        >
           <div class="bulk-heading">
             <div>
               <p class="step-label">BATCH SORTING</p>
@@ -147,36 +293,87 @@
           <h2 id="result-title"></h2>
           <p id="result-summary"></p>
         </div>
-        <button id="close-result" class="close-result" type="button" aria-label="Close result">x</button>
+        <button
+          id="close-result"
+          class="close-result"
+          type="button"
+          aria-label="Close result"
+        >
+          x
+        </button>
         <div id="result-log" class="result-log"></div>
       </section>
 
       <footer>
-        <span>Your Shopify token stays safely inside your local <code>.env</code> file.</span>
-        <span>Custom Range uses the <code>custom.range</code> metafield.</span>
+        <span
+          >Your Shopify token stays safely inside your local
+          <code>.env</code> file.</span
+        >
+
+        <a
+          href="https://moazzamshabbir.vercel.app/"
+          target="_blank"
+          rel="noreferrer"
+          >Developed by Moazzam Shabbir</a
+        >
       </footer>
     </main>
 
-    <dialog id="metafield-dialog" class="metafield-dialog" aria-labelledby="metafield-dialog-title">
+    <dialog
+      id="metafield-dialog"
+      class="metafield-dialog"
+      aria-labelledby="metafield-dialog-title"
+    >
       <form id="metafield-form" method="dialog">
         <div class="dialog-heading">
           <div>
             <p class="step-label">CUSTOM SORTING FIELD</p>
             <h2 id="metafield-dialog-title">Add a custom metafield</h2>
           </div>
-          <button id="close-metafield-dialog" class="close-result" type="button" aria-label="Close dialog">x</button>
+          <button
+            id="close-metafield-dialog"
+            class="close-result"
+            type="button"
+            aria-label="Close dialog"
+          >
+            x
+          </button>
         </div>
-        <p class="dialog-copy">Enter the exact Shopify metafield namespace and key. Choose how its values should be sorted.</p>
-        <label class="dialog-label" for="metafield-label">Display name <span>Optional</span></label>
-        <input id="metafield-label" class="dialog-input" maxlength="80" placeholder="Example: Size order">
+        <p class="dialog-copy">
+          Enter the exact Shopify metafield namespace and key. Choose how its
+          values should be sorted.
+        </p>
+        <label class="dialog-label" for="metafield-label"
+          >Display name <span>Optional</span></label
+        >
+        <input
+          id="metafield-label"
+          class="dialog-input"
+          maxlength="80"
+          placeholder="Example: Size order"
+        />
         <div class="dialog-grid">
           <div>
-            <label class="dialog-label" for="metafield-namespace">Namespace</label>
-            <input id="metafield-namespace" class="dialog-input" maxlength="255" required placeholder="custom">
+            <label class="dialog-label" for="metafield-namespace"
+              >Namespace</label
+            >
+            <input
+              id="metafield-namespace"
+              class="dialog-input"
+              maxlength="255"
+              required
+              placeholder="custom"
+            />
           </div>
           <div>
             <label class="dialog-label" for="metafield-key">Key</label>
-            <input id="metafield-key" class="dialog-input" maxlength="64" required placeholder="size_order">
+            <input
+              id="metafield-key"
+              class="dialog-input"
+              maxlength="64"
+              required
+              placeholder="size_order"
+            />
           </div>
         </div>
         <label class="dialog-label" for="metafield-type">Value type</label>
@@ -187,8 +384,16 @@
         </select>
         <p id="metafield-form-error" class="dialog-error" hidden></p>
         <div class="dialog-actions">
-          <button id="cancel-metafield-dialog" class="dialog-cancel" type="button">Cancel</button>
-          <button class="sort-button dialog-save" type="submit"><span>Add sorting field</span></button>
+          <button
+            id="cancel-metafield-dialog"
+            class="dialog-cancel"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button class="sort-button dialog-save" type="submit">
+            <span>Add sorting field</span>
+          </button>
         </div>
       </form>
     </dialog>

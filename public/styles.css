@@ -208,6 +208,8 @@ button:disabled { cursor: not-allowed; }
 .log-time { flex: 0 0 4.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 footer { display: flex; justify-content: space-between; gap: 1rem; padding: 1.5rem .3rem 0; color: var(--muted); font-size: .72rem; }
+footer a { color: var(--ink); font-weight: 800; text-decoration-color: var(--gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+footer a:hover { color: var(--accent); }
 code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .07); border-radius: 3px; }
 .metafield-dialog { width: min(540px, calc(100% - 2rem)); padding: 0; color: var(--ink); background: var(--cream); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1.7rem 5rem rgba(16, 31, 55, .25); }
 .metafield-dialog::backdrop { background: rgba(16, 31, 55, .48); backdrop-filter: blur(3px); }
