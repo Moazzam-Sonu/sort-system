@@ -46,6 +46,9 @@ The app runs database migrations automatically on startup. To run them manually,
 
 - Bulk-job progress and item failures are stored in Neon. A restart or deployment resumes an unfinished batch after its worker lease expires (up to 20 minutes).
 - Only one batch can be active at a time, even if more than one app instance is running.
+- Custom batches save each collection's original and target product order before changing Shopify. Every completed reorder is read back and verified; failed batches can be resumed or restored from the batch panel.
+- A single custom apply requires a one-time preview token that expires after 10 minutes. Shopify product order and sorting values are re-hashed before mutation; a mismatch requires a fresh preview.
+- The legacy `npm run sort:range` command was removed to prevent accidental direct collection changes outside the authenticated web app.
 - Do not enable automatic sleeping or restarts while a batch sort is running.
 - Use HTTPS from your hosting provider. The session cookie is marked `Secure` when `NODE_ENV=production`.
 - User sessions are opaque random tokens; Neon stores only their SHA-256 hashes.

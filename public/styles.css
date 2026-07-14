@@ -238,10 +238,15 @@ button:disabled { cursor: not-allowed; }
 .bulk-meter { height: 9px; margin-top: 1rem; overflow: hidden; background: #dce6f1; border-radius: 999px; }
 .bulk-meter span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #477eb6, #258467); border-radius: inherit; transition: width .45s ease; }
 .bulk-errors { margin-top: .85rem; padding: .65rem .75rem; color: #7b4640; font-size: .74rem; line-height: 1.45; background: #fff1ef; border: 1px solid #efc3be; border-radius: 8px; }
-.bulk-actions { display: flex; justify-content: flex-end; margin-top: .85rem; }
-.cancel-bulk-button { padding: .5rem .7rem; color: var(--danger); font-size: .72rem; font-weight: 800; background: #fff0ef; border: 1px solid #dfb8b5; border-radius: 7px; }
+.bulk-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; margin-top: .85rem; }
+.cancel-bulk-button, .resume-bulk-button, .restore-bulk-button { padding: .5rem .7rem; font-size: .72rem; font-weight: 800; border-radius: 7px; }
+.cancel-bulk-button { color: var(--danger); background: #fff0ef; border: 1px solid #dfb8b5; }
 .cancel-bulk-button:hover:not(:disabled) { background: #fde3e0; }
-.cancel-bulk-button.is-busy { pointer-events: none; opacity: .65; }
+.resume-bulk-button { color: #195e49; background: #e6f4ed; border: 1px solid #b7dccb; }
+.resume-bulk-button:hover:not(:disabled) { background: #d7eee2; }
+.restore-bulk-button { color: #365f91; background: #edf4fb; border: 1px solid #b8cde3; }
+.restore-bulk-button:hover:not(:disabled) { background: #e0edf8; }
+.cancel-bulk-button.is-busy, .resume-bulk-button.is-busy, .restore-bulk-button.is-busy { pointer-events: none; opacity: .65; }
 .bulk-progress-panel.is-loading .bulk-heading > *, .bulk-progress-panel.is-loading .bulk-heading > div > * { position: relative; overflow: hidden; color: transparent; background: #dce6f1; border-radius: 999px; }
 .bulk-progress-panel.is-loading .bulk-heading > div .step-label { width: 95px; height: 10px; }
 .bulk-progress-panel.is-loading .bulk-heading h2 { width: min(330px, 70vw); height: 24px; margin-top: .5rem; }

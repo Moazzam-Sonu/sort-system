@@ -78,6 +78,31 @@ const migrations = [
       "CREATE UNIQUE INDEX IF NOT EXISTS sort_jobs_one_active_idx ON sort_jobs ((1)) WHERE status IN ('queued', 'running')",
     ],
   },
+  {
+    id: '004_bulk_order_recovery',
+    statements: [
+      'ALTER TABLE sort_job_items ADD COLUMN IF NOT EXISTS original_order JSONB',
+      'ALTER TABLE sort_job_items ADD COLUMN IF NOT EXISTS target_order JSONB',
+      'ALTER TABLE sort_job_items ADD COLUMN IF NOT EXISTS verification_status TEXT',
+      'ALTER TABLE sort_jobs DROP CONSTRAINT IF EXISTS sort_jobs_type_check',
+      "ALTER TABLE sort_jobs ADD CONSTRAINT sort_jobs_type_check CHECK (type IN ('custom', 'native', 'restore'))",
+      'CREATE INDEX IF NOT EXISTS sort_job_items_recovery_idx ON sort_job_items(job_id) WHERE original_order IS NOT NULL',
+    ],
+  },
+  {
+    id: '005_preview_snapshots',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS sort_preview_snapshots (
+        id UUID PRIMARY KEY,
+        collection_id TEXT NOT NULL,
+        rules JSONB NOT NULL,
+        snapshot_hash CHAR(64) NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`,
+      'CREATE INDEX IF NOT EXISTS sort_preview_snapshots_expiry_idx ON sort_preview_snapshots(expires_at)',
+    ],
+  },
 ];
 
 export async function runMigrations() {

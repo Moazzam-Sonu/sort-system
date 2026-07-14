@@ -23,7 +23,9 @@ const feedback = createFeedback();
 
 let sortOptions = {};
 let previewKey = null;
+let previewToken = null;
 let activeBulkJobId = null;
+let recoveryBulkJobId = null;
 
 function userInitials(username) {
   return username
@@ -67,6 +69,7 @@ function setProfileMenuOpen(isOpen) {
 
 function invalidatePreview() {
   previewKey = null;
+  previewToken = null;
   feedback.hidePreview();
 }
 
@@ -146,6 +149,7 @@ async function pollBulkJob(jobId, label) {
       return;
     }
     activeBulkJobId = null;
+    recoveryBulkJobId = jobId;
     feedback.showResult({
       failed: job.status === 'failed' || job.status === 'cancelled',
       title: job.status === 'completed'
@@ -165,6 +169,7 @@ async function startBulkSort({ request, label }) {
   try {
     const { job } = await request();
     activeBulkJobId = job.id;
+    recoveryBulkJobId = null;
     feedback.renderBatchProgress(job, label);
     void pollBulkJob(job.id, label);
   } catch (error) {
@@ -180,8 +185,10 @@ previewButton.addEventListener('click', async () => {
   feedback.showPreviewLoading();
   document.querySelector('#result-panel').hidden = true;
   try {
-    const { preview } = await api.previewRules({ collectionId: collection.id, rules: ruleBuilder.getRules() });
+    const response = await api.previewRules({ collectionId: collection.id, rules: ruleBuilder.getRules() });
+    const { preview } = response;
     previewKey = currentPreviewKey();
+    previewToken = response.previewToken;
     feedback.showPreview({
       preview,
       rules: ruleBuilder.getRules(),
@@ -220,7 +227,12 @@ feedback.applyButton.addEventListener('click', async () => {
       });
       feedback.showResult({ title: 'Batch sorting started', summary: `${selected.length.toLocaleString()} collections are being sorted in the background.` });
     } else {
-      const { result, logs } = await api.applyRules({ collectionId: selected[0].id, rules: ruleBuilder.getRules(), confirmed: true });
+      const { result, logs } = await api.applyRules({
+        collectionId: selected[0].id,
+        rules: ruleBuilder.getRules(),
+        previewToken,
+        confirmed: true,
+      });
       feedback.showResult({
         title: 'Custom order was applied successfully',
         summary: result.changed
@@ -279,12 +291,59 @@ feedback.cancelBulkButton.addEventListener('click', async () => {
     const { job } = await api.cancelBulkJob(activeBulkJobId);
     feedback.renderBatchProgress(job, 'Batch sorting');
     activeBulkJobId = null;
+    recoveryBulkJobId = job.id;
   } catch (error) {
     feedback.showResult({ failed: true, title: 'Batch could not be cancelled', summary: error.message });
   } finally {
     feedback.cancelBulkButton.classList.remove('is-busy');
     feedback.cancelBulkButton.querySelector('span').textContent = 'Cancel batch';
   }
+});
+
+async function runBulkRecovery({ button, request, title, message, confirmText, label, busyText, defaultText }) {
+  if (!recoveryBulkJobId) return;
+  const confirmed = await confirmSorting({ title, message, confirmText });
+  if (!confirmed) return;
+
+  feedback.setButtonBusy(button, true, busyText, defaultText);
+  try {
+    const { job } = await request(recoveryBulkJobId);
+    activeBulkJobId = job.id;
+    recoveryBulkJobId = null;
+    feedback.renderBatchProgress(job, label);
+    void pollBulkJob(job.id, label);
+  } catch (error) {
+    feedback.showResult({ failed: true, title: `${defaultText} could not start`, summary: error.message });
+  } finally {
+    button.classList.remove('is-busy');
+    button.querySelector('span').textContent = defaultText;
+  }
+}
+
+feedback.resumeBulkButton.addEventListener('click', () => {
+  void runBulkRecovery({
+    button: feedback.resumeBulkButton,
+    request: api.resumeBulkJob,
+    title: 'Resume failed collections?',
+    message: 'Each failed collection will continue toward the saved target order and be verified again in Shopify.',
+    confirmText: 'Resume batch',
+    label: 'Resuming saved collection order',
+    busyText: 'Resuming...',
+    defaultText: 'Resume failed collections',
+  });
+});
+
+feedback.restoreBulkButton.addEventListener('click', () => {
+  void runBulkRecovery({
+    button: feedback.restoreBulkButton,
+    request: api.restoreBulkJob,
+    title: 'Restore original collection order?',
+    message: 'This creates a new batch that restores every collection with a saved original order and verifies the result in Shopify.',
+    confirmText: 'Restore order',
+    label: 'Restoring original collection order',
+    busyText: 'Starting restore...',
+    defaultText: 'Restore original order',
+  });
 });
 applyNativeButton.addEventListener('click', async () => {
   const selected = picker.getSelected();

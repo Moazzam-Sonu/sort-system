@@ -6,7 +6,7 @@ export function invalidJsonHandler(error, request, response, next) {
   next(error);
 }
 
-export function unhandledErrorHandler(error, request, response, next) {
+export function unhandledErrorHandler(error, request, response, _next) {
   console.error(error);
   response.status(500).json({ error: 'An unexpected server error occurred.' });
 }

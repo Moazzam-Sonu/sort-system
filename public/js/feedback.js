@@ -19,6 +19,8 @@ export function createFeedback() {
   const bulkBar = document.querySelector('#bulk-progress-bar');
   const bulkErrors = document.querySelector('#bulk-progress-errors');
   const cancelBulkButton = document.querySelector('#cancel-bulk-button');
+  const resumeBulkButton = document.querySelector('#resume-bulk-button');
+  const restoreBulkButton = document.querySelector('#restore-bulk-button');
 
   document.querySelector('#close-result').addEventListener('click', () => { resultPanel.hidden = true; });
 
@@ -164,6 +166,10 @@ export function createFeedback() {
     const isActive = ['queued', 'running'].includes(job.status);
     cancelBulkButton.hidden = !isActive;
     cancelBulkButton.disabled = !isActive;
+    resumeBulkButton.hidden = !job.canResume;
+    resumeBulkButton.disabled = !job.canResume;
+    restoreBulkButton.hidden = !job.canRestore;
+    restoreBulkButton.disabled = !job.canRestore;
   }
 
   function showBatchLoading(label) {
@@ -178,6 +184,10 @@ export function createFeedback() {
     bulkErrors.hidden = true;
     cancelBulkButton.hidden = true;
     cancelBulkButton.disabled = true;
+    resumeBulkButton.hidden = true;
+    resumeBulkButton.disabled = true;
+    restoreBulkButton.hidden = true;
+    restoreBulkButton.disabled = true;
   }
 
   function hideBatch() {
@@ -186,11 +196,17 @@ export function createFeedback() {
     bulkPanel.removeAttribute('aria-busy');
     cancelBulkButton.hidden = true;
     cancelBulkButton.disabled = true;
+    resumeBulkButton.hidden = true;
+    resumeBulkButton.disabled = true;
+    restoreBulkButton.hidden = true;
+    restoreBulkButton.disabled = true;
   }
 
   return {
     applyButton,
     cancelBulkButton,
+    resumeBulkButton,
+    restoreBulkButton,
     hidePreview,
     showPreviewLoading,
     showPreview,

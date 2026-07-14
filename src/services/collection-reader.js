@@ -9,7 +9,8 @@ import { customMetafieldId } from '../utils/metafields.js';
 export async function listCollections(client) {
   const collections = [];
   let after = null;
-  while (true) {
+  let hasNextPage = true;
+  while (hasNextPage) {
     const response = await client.request({ query: LIST_COLLECTIONS_QUERY, variables: { first: PAGE_SIZE, after } });
     const connection = response.data?.collections;
     if (!connection) throw new Error('Collections could not be fetched from Shopify.');
@@ -21,7 +22,8 @@ export async function listCollections(client) {
       image: collection.image ? { url: collection.image.url, altText: collection.image.altText } : null,
       productCount: collection.productsCount?.count ?? 0,
     })));
-    if (!connection.pageInfo.hasNextPage) return collections;
+    hasNextPage = connection.pageInfo.hasNextPage;
+    if (!hasNextPage) return collections;
     after = connection.pageInfo.endCursor;
   }
 }
@@ -33,9 +35,10 @@ export async function fetchAllCollectionProducts(client, collectionId, rules, lo
   let after = null;
   let collectionTitle = '';
   let sortOrder = '';
+  let hasNextPage = true;
 
   log('Fetching products from Shopify...');
-  while (true) {
+  while (hasNextPage) {
     const response = await client.request({
       query,
       variables: {
@@ -60,7 +63,8 @@ export async function fetchAllCollectionProducts(client, collectionId, rules, lo
         product[`customMetafield${index}`]?.value ?? null,
       ])),
     })));
-    if (!collection.products.pageInfo.hasNextPage) {
+    hasNextPage = collection.products.pageInfo.hasNextPage;
+    if (!hasNextPage) {
       if (rules.some((rule) => rule.field === 'BEST_SELLING')) {
         const ranks = await fetchBestSellingRanks(client, collectionId, log);
         for (const product of products) {
@@ -77,8 +81,9 @@ async function fetchBestSellingRanks(client, collectionId, log) {
   const ranks = new Map();
   let after = null;
   let position = 0;
+  let hasNextPage = true;
   log('Fetching Shopify best-selling ranks...');
-  while (true) {
+  while (hasNextPage) {
     const response = await client.request({
       query: GET_BEST_SELLING_RANKS_QUERY,
       variables: { id: collectionId, first: PAGE_SIZE, after },
@@ -89,7 +94,8 @@ async function fetchBestSellingRanks(client, collectionId, log) {
       position += 1;
       ranks.set(product.id, position);
     }
-    if (!connection.pageInfo.hasNextPage) return ranks;
+    hasNextPage = connection.pageInfo.hasNextPage;
+    if (!hasNextPage) return ranks;
     after = connection.pageInfo.endCursor;
   }
 }

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 import { getDatabase } from '../database/client.js';
-import { applyCustomRules, applySort } from './collection-sorter.js';
+import { applyCustomRules, applySort, restoreOriginalOrder } from './collection-sorter.js';
 
 const JOB_LEASE_MS = 20 * 60 * 1000;
 const RETRY_DELAY_MS = 5_000;
@@ -15,7 +15,11 @@ function parseAction(action) {
   return typeof action === 'string' ? JSON.parse(action) : action;
 }
 
-function toJobStatus(job, errors = []) {
+function parseOrder(order) {
+  return typeof order === 'string' ? JSON.parse(order) : order;
+}
+
+function toJobStatus(job, errors = [], recovery = {}) {
   return {
     id: job.id,
     status: job.status,
@@ -26,6 +30,8 @@ function toJobStatus(job, errors = []) {
     failed: Number(job.failed),
     currentIndex: job.current_index === null ? null : Number(job.current_index),
     errors: errors.map((error) => ({ collectionId: error.collection_id, message: error.error_message })),
+    canResume: Boolean(recovery.can_resume),
+    canRestore: Boolean(recovery.can_restore),
   };
 }
 
@@ -92,7 +98,7 @@ async function isWorkerActive(jobId, workerId) {
 async function claimNextItem(jobId, workerId) {
   const sql = getDatabase();
   const [next] = await sql`
-    SELECT id, collection_id, position
+    SELECT id, collection_id, position, original_order, target_order
     FROM sort_job_items
     WHERE job_id = ${jobId} AND status = 'queued'
     ORDER BY position
@@ -104,7 +110,7 @@ async function claimNextItem(jobId, workerId) {
     UPDATE sort_job_items
     SET status = 'running', attempts = attempts + 1, updated_at = NOW()
     WHERE id = ${next.id} AND status = 'queued'
-    RETURNING id, collection_id, position
+    RETURNING id, collection_id, position, original_order, target_order
   `;
   if (!item) return null;
 
@@ -116,7 +122,19 @@ async function claimNextItem(jobId, workerId) {
   return item;
 }
 
-async function finishItem({ jobId, workerId, itemId, changed, errorMessage }) {
+async function persistItemPlan({ itemId, originalOrder, targetOrder }) {
+  const sql = getDatabase();
+  await sql`
+    UPDATE sort_job_items
+    SET original_order = COALESCE(original_order, ${JSON.stringify(originalOrder)}::jsonb),
+        target_order = COALESCE(target_order, ${JSON.stringify(targetOrder)}::jsonb),
+        verification_status = 'planned',
+        updated_at = NOW()
+    WHERE id = ${itemId}
+  `;
+}
+
+async function finishItem({ jobId, workerId, itemId, changed, errorMessage, verificationStatus = null }) {
   const sql = getDatabase();
   const itemStatus = errorMessage ? 'failed' : 'completed';
   const changedIncrement = changed ? 1 : 0;
@@ -125,7 +143,10 @@ async function finishItem({ jobId, workerId, itemId, changed, errorMessage }) {
   await sql.transaction([
     sql`
       UPDATE sort_job_items
-      SET status = ${itemStatus}, error_message = ${errorMessage ?? null}, updated_at = NOW()
+      SET status = ${itemStatus},
+          error_message = ${errorMessage ?? null},
+          verification_status = ${verificationStatus ?? (errorMessage ? 'failed' : 'not_required')},
+          updated_at = NOW()
       WHERE id = ${itemId} AND status = 'running'
     `,
     sql`
@@ -193,10 +214,29 @@ async function processJob(jobId) {
       if (!item) break;
 
       try {
-        const result = job.action.type === 'custom'
-          ? await applyCustomRules({ collectionId: item.collection_id, rules: job.action.rules })
-          : await applySort({ collectionId: item.collection_id, sortOrder: job.action.sortOrder });
-        await finishItem({ jobId, workerId, itemId: item.id, changed: result.changed !== false });
+        let result;
+        let verificationStatus = 'not_required';
+        if (job.action.type === 'custom') {
+          const plan = item.target_order
+            ? { originalOrder: parseOrder(item.original_order), targetOrder: parseOrder(item.target_order) }
+            : undefined;
+          result = await applyCustomRules({
+            collectionId: item.collection_id,
+            rules: job.action.rules,
+            plan,
+            onPlan: ({ originalOrder, targetOrder }) => persistItemPlan({ itemId: item.id, originalOrder, targetOrder }),
+          });
+          verificationStatus = 'verified';
+        } else if (job.action.type === 'restore') {
+          result = await restoreOriginalOrder({
+            collectionId: item.collection_id,
+            originalOrder: parseOrder(item.target_order),
+          });
+          verificationStatus = 'verified';
+        } else {
+          result = await applySort({ collectionId: item.collection_id, sortOrder: job.action.sortOrder });
+        }
+        await finishItem({ jobId, workerId, itemId: item.id, changed: result.changed !== false, verificationStatus });
       } catch (error) {
         await finishItem({
           jobId,
@@ -229,10 +269,27 @@ export async function getBulkJob(jobId) {
     ORDER BY position
     LIMIT 20
   `;
-  return toJobStatus(job, errors);
+  const [recovery] = await sql`
+    SELECT
+      EXISTS (
+        SELECT 1
+        FROM sort_job_items
+        WHERE job_id = ${jobId} AND status IN ('failed', 'queued')
+      ) AS can_resume,
+      EXISTS (
+        SELECT 1
+        FROM sort_job_items
+        WHERE job_id = ${jobId} AND original_order IS NOT NULL
+      ) AS can_restore
+  `;
+  const canRecover = ['completed_with_errors', 'cancelled', 'failed'].includes(job.status);
+  return toJobStatus(job, errors, {
+    can_resume: canRecover && recovery.can_resume,
+    can_restore: canRecover && recovery.can_restore,
+  });
 }
 
-export async function startBulkJob({ collectionIds, action }) {
+export async function startBulkJob({ collectionIds, action, itemPlans = new Map() }) {
   const sql = getDatabase();
   const id = crypto.randomUUID();
   const actionJson = JSON.stringify(action);
@@ -241,10 +298,20 @@ export async function startBulkJob({ collectionIds, action }) {
       INSERT INTO sort_jobs (id, type, status, total, action)
       VALUES (${id}, ${action.type}, 'queued', ${collectionIds.length}, ${actionJson}::jsonb)
     `,
-    ...collectionIds.map((collectionId, index) => sql`
-      INSERT INTO sort_job_items (job_id, collection_id, position)
-      VALUES (${id}, ${collectionId}, ${index + 1})
-    `),
+    ...collectionIds.map((collectionId, index) => {
+      const plan = itemPlans.get(collectionId);
+      return sql`
+        INSERT INTO sort_job_items (job_id, collection_id, position, original_order, target_order, verification_status)
+        VALUES (
+          ${id},
+          ${collectionId},
+          ${index + 1},
+          ${plan?.originalOrder ? JSON.stringify(plan.originalOrder) : null}::jsonb,
+          ${plan?.targetOrder ? JSON.stringify(plan.targetOrder) : null}::jsonb,
+          ${plan ? 'planned' : null}
+        )
+      `;
+    }),
   ];
   await sql.transaction(statements);
   scheduleJob(id);
@@ -269,6 +336,90 @@ export async function cancelBulkJob(jobId) {
     WHERE id = ${jobId} AND status IN ('queued', 'running')
   `;
   return getBulkJob(jobId);
+}
+
+export async function resumeBulkJob(jobId) {
+  const sql = getDatabase();
+  const [job] = await sql`
+    SELECT status, failed
+    FROM sort_jobs
+    WHERE id = ${jobId}
+  `;
+  if (!job) return null;
+  if (!['completed_with_errors', 'cancelled', 'failed'].includes(job.status)) {
+    throw new Error('Only a failed or cancelled batch can be resumed.');
+  }
+  const [runningItem] = await sql`
+    SELECT id
+    FROM sort_job_items
+    WHERE job_id = ${jobId} AND status = 'running'
+    LIMIT 1
+  `;
+  if (runningItem) {
+    throw new Error('The current collection update is still finishing. Wait a moment before resuming this batch.');
+  }
+
+  await sql.transaction([
+    sql`
+      UPDATE sort_job_items
+      SET status = 'queued', error_message = NULL, verification_status = NULL, updated_at = NOW()
+      WHERE job_id = ${jobId} AND status IN ('failed', 'queued')
+    `,
+    sql`
+      UPDATE sort_jobs
+      SET status = 'queued',
+          processed = processed - failed,
+          failed = 0,
+          current_index = NULL,
+          worker_id = NULL,
+          lease_expires_at = NULL,
+          completed_at = NULL,
+          updated_at = NOW()
+      WHERE id = ${jobId}
+    `,
+  ]);
+  scheduleJob(jobId);
+  return getBulkJob(jobId);
+}
+
+export async function restoreBulkJob(jobId) {
+  const sql = getDatabase();
+  const [sourceJob] = await sql`
+    SELECT status
+    FROM sort_jobs
+    WHERE id = ${jobId}
+  `;
+  if (!sourceJob) return null;
+  if (['queued', 'running'].includes(sourceJob.status)) {
+    throw new Error('Cancel or wait for the active batch before restoring its original order.');
+  }
+  const [runningItem] = await sql`
+    SELECT id
+    FROM sort_job_items
+    WHERE job_id = ${jobId} AND status = 'running'
+    LIMIT 1
+  `;
+  if (runningItem) {
+    throw new Error('The current collection update is still finishing. Wait a moment before restoring this batch.');
+  }
+  const sourceItems = await sql`
+    SELECT collection_id, original_order
+    FROM sort_job_items
+    WHERE job_id = ${jobId} AND original_order IS NOT NULL
+    ORDER BY position
+  `;
+  if (sourceItems.length === 0) {
+    throw new Error('This batch does not have saved original orders to restore.');
+  }
+  const itemPlans = new Map(sourceItems.map((item) => [item.collection_id, {
+    originalOrder: parseOrder(item.original_order),
+    targetOrder: parseOrder(item.original_order),
+  }]));
+  return startBulkJob({
+    collectionIds: sourceItems.map((item) => item.collection_id),
+    action: { type: 'restore', sourceJobId: jobId },
+    itemPlans,
+  });
 }
 
 export async function resumePendingBulkJobs() {

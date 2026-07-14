@@ -22,8 +22,9 @@ function mapDefinition(definition) {
 export async function listProductMetafieldDefinitions(client) {
   const definitions = [];
   let after = null;
+  let hasNextPage = true;
 
-  while (true) {
+  while (hasNextPage) {
     const response = await client.request({
       query: LIST_PRODUCT_METAFIELD_DEFINITIONS_QUERY,
       variables: { first: PAGE_SIZE, after },
@@ -32,7 +33,8 @@ export async function listProductMetafieldDefinitions(client) {
     if (!connection) throw new Error('Product metafield definitions could not be fetched from Shopify.');
 
     definitions.push(...connection.nodes.map(mapDefinition));
-    if (!connection.pageInfo.hasNextPage) {
+    hasNextPage = connection.pageInfo.hasNextPage;
+    if (!hasNextPage) {
       return definitions.sort((left, right) => collator.compare(left.label, right.label));
     }
     after = connection.pageInfo.endCursor;
