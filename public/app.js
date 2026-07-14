@@ -83,6 +83,7 @@ function renderNativeSortOptions() {
     element.textContent = option.label;
     nativeSortSelect.append(element);
   }
+  nativeSortSelect.disabled = false;
 }
 
 async function pollBulkJob(jobId, label) {
@@ -218,8 +219,10 @@ async function loadApp() {
     ruleBuilder.configure(optionsData.ruleFields);
     renderNativeSortOptions();
     picker.setCollections(collectionsData.collections);
+    collectionStatus.classList.remove('is-loading');
     collectionStatus.textContent = `${collectionsData.collections.length.toLocaleString()} collections available`;
   } catch (error) {
+    collectionStatus.classList.remove('is-loading');
     collectionStatus.textContent = 'The app could not finish loading';
     feedback.showResult({ failed: true, title: 'Shopify connection issue', summary: error.message });
   }

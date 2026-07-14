@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#133737" />
     <title>Collection Sorter</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/vendor/sweetalert2.css" />
   </head>
@@ -52,7 +53,7 @@
             <p class="step-label">STEP 01</p>
             <h2 id="workspace-title">Choose a collection</h2>
           </div>
-          <p id="collection-status" class="collection-status" role="status">
+          <p id="collection-status" class="collection-status is-loading" role="status">
             Loading collections...
           </p>
         </div>
@@ -163,7 +164,10 @@
             </button>
           </div>
 
-          <div id="rule-list" class="rule-list" aria-live="polite"></div>
+          <div id="rule-list" class="rule-list" aria-live="polite">
+            <div class="rule-skeleton" aria-hidden="true"><span></span><i></i><i></i><b></b></div>
+            <div class="rule-skeleton" aria-hidden="true"><span></span><i></i><i></i><b></b></div>
+          </div>
           <div class="rule-actions">
             <button id="add-rule-button" class="add-rule-button" type="button">
               + Add another rule
@@ -211,7 +215,7 @@
                 alphabetical sorts. These cannot be combined with custom rules.
               </p>
             </div>
-            <select id="native-sort-select" aria-label="Shopify native sort">
+            <select id="native-sort-select" aria-label="Shopify native sort" disabled>
               <option value="">Choose a Shopify sort...</option>
             </select>
             <button
