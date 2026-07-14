@@ -20,7 +20,34 @@ export async function updateSortOrder(client, collectionId, sortOrder) {
   if (payload?.job?.id) await waitForJob(client, payload.job.id, 'Sort order update');
 }
 
-export async function reorderCollectionInBatches(client, collectionId, currentOrder, targetOrder, log) {
+async function submitMoveBatch(client, collectionId, moves, batchNumber, log) {
+  log(`Updating collection: batch ${batchNumber} (${moves.length} moves)`);
+  const response = await client.request({
+    query: REORDER_COLLECTION_PRODUCTS_MUTATION,
+    variables: { id: collectionId, moves, idempotencyKey: crypto.randomUUID() },
+  });
+  const payload = response.data?.collectionReorderProducts;
+  const userErrors = payload?.userErrors ?? [];
+  if (userErrors.length > 0) throw new Error(formatUserErrors(userErrors));
+  if (!payload?.job?.id) throw new Error('Shopify did not return a reorder job.');
+
+  await waitForJob(client, payload.job.id, `Reorder batch ${batchNumber}`);
+}
+
+export async function reorderCollectionInBatches(client, collectionId, currentOrder, targetOrder, log, { forceFullOrder = false } = {}) {
+  if (forceFullOrder) {
+    const reversedTarget = [...targetOrder].reverse();
+    let batchNumber = 0;
+    for (let offset = 0; offset < reversedTarget.length; offset += MAX_MOVES_PER_REQUEST) {
+      const moves = reversedTarget
+        .slice(offset, offset + MAX_MOVES_PER_REQUEST)
+        .map((id) => ({ id, newPosition: '0' }));
+      batchNumber += 1;
+      await submitMoveBatch(client, collectionId, moves, batchNumber, log);
+    }
+    return;
+  }
+
   let workingOrder = [...currentOrder];
   let batchNumber = 0;
   while (!arraysEqual(workingOrder, targetOrder)) {
@@ -28,17 +55,7 @@ export async function reorderCollectionInBatches(client, collectionId, currentOr
     if (moves.length === 0) throw new Error('Unable to create product moves for this collection.');
 
     batchNumber += 1;
-    log(`Updating collection: batch ${batchNumber} (${moves.length} moves)`);
-    const response = await client.request({
-      query: REORDER_COLLECTION_PRODUCTS_MUTATION,
-      variables: { id: collectionId, moves, idempotencyKey: crypto.randomUUID() },
-    });
-    const payload = response.data?.collectionReorderProducts;
-    const userErrors = payload?.userErrors ?? [];
-    if (userErrors.length > 0) throw new Error(formatUserErrors(userErrors));
-    if (!payload?.job?.id) throw new Error('Shopify did not return a reorder job.');
-
-    await waitForJob(client, payload.job.id, `Reorder batch ${batchNumber}`);
+    await submitMoveBatch(client, collectionId, moves, batchNumber, log);
     workingOrder = nextOrder;
   }
 }

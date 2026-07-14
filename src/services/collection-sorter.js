@@ -49,15 +49,27 @@ function ensureSameProducts(currentOrder, targetOrder) {
 async function verifyCollectionOrder(client, collectionId, targetOrder, log) {
   const latest = await fetchAllCollectionProducts(client, collectionId, [], log);
   const actualOrder = latest.products.map((product) => product.id);
+  if (latest.hasSupplementalDraftProducts) {
+    const expectedActiveOrder = targetOrder.filter((id) => latest.collectionProductIds.has(id));
+    const actualActiveOrder = actualOrder.filter((id) => latest.collectionProductIds.has(id));
+    if (!arraysEqual(actualActiveOrder, expectedActiveOrder)) {
+      throw new Error('Shopify did not confirm the active product order. The draft-inclusive reorder needs a fresh preview before retrying.');
+    }
+    log('Shopify confirmed the active order. Shopify does not expose draft collection positions for a full order readback.');
+    return { verificationStatus: 'verified_active_only' };
+  }
   if (!arraysEqual(actualOrder, targetOrder)) {
     throw new Error('Shopify did not confirm the final collection order. The original and target orders are saved for recovery.');
   }
-  return latest;
+  return { verificationStatus: 'verified' };
 }
 
 async function applyManualOrder({ client, collection, collectionId, currentOrder, targetOrder, log }) {
   ensureSameProducts(currentOrder, targetOrder);
-  const movedCount = targetOrder.filter((id, index) => id !== currentOrder[index]).length;
+  const forceFullOrder = collection.hasSupplementalDraftProducts;
+  const movedCount = forceFullOrder
+    ? targetOrder.length
+    : targetOrder.filter((id, index) => id !== currentOrder[index]).length;
 
   if (collection.sortOrder !== 'MANUAL') {
     log('Switching the collection to manual sorting...');
@@ -65,15 +77,17 @@ async function applyManualOrder({ client, collection, collectionId, currentOrder
   }
 
   if (movedCount > 0) {
-    log(`${movedCount} product position(s) will change.`);
-    await reorderCollectionInBatches(client, collectionId, currentOrder, targetOrder, log);
+    log(forceFullOrder
+      ? `Rebuilding the full order for ${movedCount} active and draft product(s).`
+      : `${movedCount} product position(s) will change.`);
+    await reorderCollectionInBatches(client, collectionId, currentOrder, targetOrder, log, { forceFullOrder });
   } else {
     log('The collection is already in the requested order.');
   }
 
-  await verifyCollectionOrder(client, collectionId, targetOrder, log);
-  log('Shopify confirmed the final collection order.');
-  return movedCount;
+  const verification = await verifyCollectionOrder(client, collectionId, targetOrder, log);
+  if (verification.verificationStatus === 'verified') log('Shopify confirmed the final collection order.');
+  return { movedCount, verificationStatus: verification.verificationStatus };
 }
 
 export async function listCollections() {
@@ -94,6 +108,9 @@ export async function previewCustomRules({ collectionId, rules, log = () => {} }
   const warnings = [...missingByField.values()]
     .filter(({ count }) => count > 0)
     .map(({ rule, count }) => `${count} product(s) have no ${rule.label} value and will be placed last.`);
+  if (collection.hasSupplementalDraftProducts) {
+    warnings.push('Draft products are included. Shopify cannot return their original collection positions, so a full order rebuild is required when applying.');
+  }
 
   return {
     collectionTitle: collection.collectionTitle,
@@ -117,9 +134,22 @@ export async function applyCustomRules({ collectionId, rules, log = () => {}, pl
   const targetOrder = plan?.targetOrder ?? sorted.map((item) => item.product.id);
   const originalOrder = plan?.originalOrder ?? currentOrder;
   ensureSameProducts(currentOrder, targetOrder);
-  await onPlan?.({ originalOrder, targetOrder, collectionTitle: collection.collectionTitle });
-  const movedCount = await applyManualOrder({ client, collection, collectionId, currentOrder, targetOrder, log });
-  return { collectionTitle: collection.collectionTitle, productCount: collection.products.length, movedCount, changed: movedCount > 0, ruleSummary: buildRuleSummary(normalizedRules) };
+  await onPlan?.({
+    originalOrder,
+    targetOrder,
+    collectionTitle: collection.collectionTitle,
+    recoverySupported: !collection.hasSupplementalDraftProducts,
+  });
+  const { movedCount, verificationStatus } = await applyManualOrder({ client, collection, collectionId, currentOrder, targetOrder, log });
+  return {
+    collectionTitle: collection.collectionTitle,
+    productCount: collection.products.length,
+    movedCount,
+    changed: movedCount > 0,
+    ruleSummary: buildRuleSummary(normalizedRules),
+    verificationStatus,
+    recoverySupported: !collection.hasSupplementalDraftProducts,
+  };
 }
 
 export async function restoreOriginalOrder({ collectionId, originalOrder, log = () => {} }) {
@@ -130,7 +160,7 @@ export async function restoreOriginalOrder({ collectionId, originalOrder, log = 
   const client = createShopifyClient();
   const collection = await fetchAllCollectionProducts(client, collectionId, [], log);
   const currentOrder = collection.products.map((product) => product.id);
-  const movedCount = await applyManualOrder({
+  const { movedCount, verificationStatus } = await applyManualOrder({
     client,
     collection,
     collectionId,
@@ -138,7 +168,7 @@ export async function restoreOriginalOrder({ collectionId, originalOrder, log = 
     targetOrder: originalOrder,
     log,
   });
-  return { collectionTitle: collection.collectionTitle, productCount: collection.products.length, movedCount, changed: movedCount > 0 };
+  return { collectionTitle: collection.collectionTitle, productCount: collection.products.length, movedCount, changed: movedCount > 0, verificationStatus };
 }
 
 export async function applySort({ collectionId, sortOrder, log = () => {} }) {

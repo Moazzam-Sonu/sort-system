@@ -122,12 +122,13 @@ async function claimNextItem(jobId, workerId) {
   return item;
 }
 
-async function persistItemPlan({ itemId, originalOrder, targetOrder }) {
+async function persistItemPlan({ itemId, originalOrder, targetOrder, recoverySupported = true }) {
   const sql = getDatabase();
   await sql`
     UPDATE sort_job_items
     SET original_order = COALESCE(original_order, ${JSON.stringify(originalOrder)}::jsonb),
         target_order = COALESCE(target_order, ${JSON.stringify(targetOrder)}::jsonb),
+        recovery_supported = ${recoverySupported},
         verification_status = 'planned',
         updated_at = NOW()
     WHERE id = ${itemId}
@@ -224,9 +225,14 @@ async function processJob(jobId) {
             collectionId: item.collection_id,
             rules: job.action.rules,
             plan,
-            onPlan: ({ originalOrder, targetOrder }) => persistItemPlan({ itemId: item.id, originalOrder, targetOrder }),
+            onPlan: ({ originalOrder, targetOrder, recoverySupported }) => persistItemPlan({
+              itemId: item.id,
+              originalOrder,
+              targetOrder,
+              recoverySupported,
+            }),
           });
-          verificationStatus = 'verified';
+          verificationStatus = result.verificationStatus ?? 'verified';
         } else if (job.action.type === 'restore') {
           result = await restoreOriginalOrder({
             collectionId: item.collection_id,
@@ -279,7 +285,7 @@ export async function getBulkJob(jobId) {
       EXISTS (
         SELECT 1
         FROM sort_job_items
-        WHERE job_id = ${jobId} AND original_order IS NOT NULL
+        WHERE job_id = ${jobId} AND original_order IS NOT NULL AND recovery_supported = TRUE
       ) AS can_restore
   `;
   const canRecover = ['completed_with_errors', 'cancelled', 'failed'].includes(job.status);
@@ -301,14 +307,15 @@ export async function startBulkJob({ collectionIds, action, itemPlans = new Map(
     ...collectionIds.map((collectionId, index) => {
       const plan = itemPlans.get(collectionId);
       return sql`
-        INSERT INTO sort_job_items (job_id, collection_id, position, original_order, target_order, verification_status)
+        INSERT INTO sort_job_items (job_id, collection_id, position, original_order, target_order, verification_status, recovery_supported)
         VALUES (
           ${id},
           ${collectionId},
           ${index + 1},
           ${plan?.originalOrder ? JSON.stringify(plan.originalOrder) : null}::jsonb,
           ${plan?.targetOrder ? JSON.stringify(plan.targetOrder) : null}::jsonb,
-          ${plan ? 'planned' : null}
+          ${plan ? 'planned' : null},
+          ${plan?.recoverySupported ?? true}
         )
       `;
     }),
@@ -405,7 +412,7 @@ export async function restoreBulkJob(jobId) {
   const sourceItems = await sql`
     SELECT collection_id, original_order
     FROM sort_job_items
-    WHERE job_id = ${jobId} AND original_order IS NOT NULL
+    WHERE job_id = ${jobId} AND original_order IS NOT NULL AND recovery_supported = TRUE
     ORDER BY position
   `;
   if (sourceItems.length === 0) {

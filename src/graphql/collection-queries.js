@@ -25,9 +25,10 @@ export function buildCollectionProductsQuery(customMetafields) {
     query GetCollectionProducts($id: ID!, $first: Int!, $after: String${variableDefinitions ? `, ${variableDefinitions}` : ''}) {
       collection(id: $id) {
         id
+        legacyResourceId
         title
         sortOrder
-        products(first: $first, after: $after, query: "status:active,draft") {
+        products(first: $first, after: $after) {
           nodes {
             id
             title
@@ -47,10 +48,39 @@ export function buildCollectionProductsQuery(customMetafields) {
   `;
 }
 
+export function buildDraftCollectionProductsQuery(customMetafields) {
+  const variableDefinitions = customMetafields
+    .map((_, index) => `$metafieldNamespace${index}: String!, $metafieldKey${index}: String!`)
+    .join(', ');
+  const selections = customMetafields
+    .map((_, index) => `customMetafield${index}: metafield(namespace: $metafieldNamespace${index}, key: $metafieldKey${index}) { value }`)
+    .join('\n');
+
+  return `
+    query GetDraftCollectionProducts($first: Int!, $after: String, $query: String!${variableDefinitions ? `, ${variableDefinitions}` : ''}) {
+      products(first: $first, after: $after, query: $query) {
+        nodes {
+          id
+          title
+          vendor
+          productType
+          tags
+          createdAt
+          totalInventory
+          priceRangeV2 { minVariantPrice { amount currencyCode } }
+          rangeMetafield: metafield(namespace: "custom", key: "range") { value }
+          ${selections}
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  `;
+}
+
 export const GET_BEST_SELLING_RANKS_QUERY = `
   query GetBestSellingRanks($id: ID!, $first: Int!, $after: String) {
     collection(id: $id) {
-      products(first: $first, after: $after, sortKey: BEST_SELLING, query: "status:active,draft") {
+      products(first: $first, after: $after, sortKey: BEST_SELLING) {
         nodes { id }
         pageInfo { hasNextPage endCursor }
       }

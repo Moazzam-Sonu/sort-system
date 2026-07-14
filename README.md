@@ -10,6 +10,7 @@ An internal Shopify tool for safely sorting one or many product collections. It 
 - Browse, search, and multi-select Shopify collections.
 - Apply Shopify's native sort modes, including best selling, alphabetic, price, and date.
 - Build custom multi-rule sorting with range metafields, product data, and custom metafields.
+- Include active and draft products in custom sorting.
 - Preview the resulting product order before applying it.
 - Queue bulk changes across multiple collections.
 - Save original and target orders in Neon so interrupted bulk jobs can be resumed or restored.
@@ -152,6 +153,7 @@ The command asks for a password twice. Usernames must be 3-64 characters and pas
 - Bulk jobs, original order, target order, attempts, and recovery state are persisted in Neon.
 - Only one bulk job can run at once.
 - Completed manual reorders are read back from Shopify and verified.
+- Draft-inclusive sorts rebuild the full order. Shopify does not return draft products' original collection positions, so the app verifies the active-product sequence and disables **Restore original order** for that bulk item.
 
 ## Development Commands
 

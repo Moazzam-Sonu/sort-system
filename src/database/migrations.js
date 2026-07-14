@@ -103,6 +103,12 @@ const migrations = [
       'CREATE INDEX IF NOT EXISTS sort_preview_snapshots_expiry_idx ON sort_preview_snapshots(expires_at)',
     ],
   },
+  {
+    id: '006_draft_order_recovery',
+    statements: [
+      'ALTER TABLE sort_job_items ADD COLUMN IF NOT EXISTS recovery_supported BOOLEAN NOT NULL DEFAULT TRUE',
+    ],
+  },
 ];
 
 export async function runMigrations() {

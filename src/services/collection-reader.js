@@ -1,10 +1,28 @@
 import { PAGE_SIZE } from '../config.js';
 import {
   buildCollectionProductsQuery,
+  buildDraftCollectionProductsQuery,
   GET_BEST_SELLING_RANKS_QUERY,
   LIST_COLLECTIONS_QUERY,
 } from '../graphql/collection-queries.js';
 import { customMetafieldId } from '../utils/metafields.js';
+
+function withCustomMetafields(product, customMetafields) {
+  return {
+    ...product,
+    customMetafields: Object.fromEntries(customMetafields.map((metafield, index) => [
+      customMetafieldId(metafield),
+      product[`customMetafield${index}`]?.value ?? null,
+    ])),
+  };
+}
+
+function metafieldVariables(customMetafields) {
+  return Object.fromEntries(customMetafields.flatMap((metafield, index) => [
+    [`metafieldNamespace${index}`, metafield.namespace],
+    [`metafieldKey${index}`, metafield.key],
+  ]));
+}
 
 export async function listCollections(client) {
   const collections = [];
@@ -29,7 +47,7 @@ export async function listCollections(client) {
 }
 
 export async function fetchAllCollectionProducts(client, collectionId, rules, log = () => {}) {
-  const products = [];
+  const collectionProducts = [];
   const customMetafields = rules.filter((rule) => rule.field === 'METAFIELD').map((rule) => rule.metafield);
   const query = buildCollectionProductsQuery(customMetafields);
   let after = null;
@@ -56,25 +74,60 @@ export async function fetchAllCollectionProducts(client, collectionId, rules, lo
 
     collectionTitle = collection.title;
     sortOrder = collection.sortOrder;
-    products.push(...collection.products.nodes.map((product) => ({
-      ...product,
-      customMetafields: Object.fromEntries(customMetafields.map((metafield, index) => [
-        customMetafieldId(metafield),
-        product[`customMetafield${index}`]?.value ?? null,
-      ])),
-    })));
+    collectionProducts.push(...collection.products.nodes.map((product) => withCustomMetafields(product, customMetafields)));
     hasNextPage = collection.products.pageInfo.hasNextPage;
     if (!hasNextPage) {
       if (rules.some((rule) => rule.field === 'BEST_SELLING')) {
         const ranks = await fetchBestSellingRanks(client, collectionId, log);
-        for (const product of products) {
+        for (const product of collectionProducts) {
           product.bestSellingRank = ranks.get(product.id) ?? null;
         }
       }
-      return { collectionTitle, sortOrder, products };
+      const draftProducts = await fetchDraftCollectionProducts(client, collection.legacyResourceId, customMetafields, log);
+      const collectionProductIds = new Set(collectionProducts.map((product) => product.id));
+      const supplementalDraftProducts = draftProducts.filter((product) => !collectionProductIds.has(product.id));
+      const products = [...collectionProducts, ...supplementalDraftProducts];
+      return {
+        collectionTitle,
+        sortOrder,
+        products,
+        collectionProductIds,
+        hasSupplementalDraftProducts: supplementalDraftProducts.length > 0,
+      };
     }
     after = collection.products.pageInfo.endCursor;
   }
+}
+
+async function fetchDraftCollectionProducts(client, legacyCollectionId, customMetafields, log) {
+  if (!legacyCollectionId) return [];
+
+  const products = [];
+  const query = buildDraftCollectionProductsQuery(customMetafields);
+  const productQuery = `collection_id:${legacyCollectionId} status:draft`;
+  let after = null;
+  let hasNextPage = true;
+  log('Fetching draft products from Shopify...');
+
+  while (hasNextPage) {
+    const response = await client.request({
+      query,
+      variables: {
+        first: PAGE_SIZE,
+        after,
+        query: productQuery,
+        ...metafieldVariables(customMetafields),
+      },
+    });
+    const connection = response.data?.products;
+    if (!connection) throw new Error('Draft products could not be fetched from Shopify.');
+
+    products.push(...connection.nodes.map((product) => withCustomMetafields(product, customMetafields)));
+    hasNextPage = connection.pageInfo.hasNextPage;
+    after = connection.pageInfo.endCursor;
+  }
+
+  return products;
 }
 
 async function fetchBestSellingRanks(client, collectionId, log) {
