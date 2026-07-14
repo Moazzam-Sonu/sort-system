@@ -37,7 +37,7 @@
         </a>
         <div class="topbar-actions">
           <span class="secure-note"><span></span>Secure Shopify connection</span>
-          <div id="profile-menu" class="profile-menu">
+          <div id="profile-menu" class="profile-menu is-loading" data-initial-skeleton aria-busy="true">
             <button
               id="profile-trigger"
               class="profile-trigger"
@@ -45,6 +45,7 @@
               aria-expanded="false"
               aria-haspopup="menu"
               aria-controls="profile-popover"
+              disabled
             >
               <span id="profile-avatar" class="profile-avatar" aria-hidden="true">--</span>
               <span class="profile-trigger-copy">
@@ -162,7 +163,7 @@
           </div>
         </div>
 
-        <div class="sort-section rule-section">
+        <div class="sort-section rule-section initial-skeleton is-loading" data-initial-skeleton aria-busy="true">
           <div class="workspace-heading sort-heading">
             <div>
               <p class="step-label">STEP 02</p>
@@ -206,20 +207,21 @@
             <div class="rule-skeleton" aria-hidden="true"><span></span><i></i><i></i><b></b></div>
           </div>
           <div class="rule-actions">
-            <button id="add-rule-button" class="add-rule-button" type="button">
+            <button id="add-rule-button" class="add-rule-button" type="button" disabled>
               + Add another rule
             </button>
             <button
               id="open-metafield-button"
               class="add-rule-button add-metafield-button"
               type="button"
+              disabled
             >
               + Add custom metafield
             </button>
           </div>
         </div>
 
-        <div class="action-row">
+        <div class="action-row is-loading" data-initial-skeleton aria-busy="true">
           <p id="selection-summary">
             Select a collection to preview a custom order.
           </p>
@@ -243,7 +245,7 @@
           </button>
         </div>
 
-        <section class="native-sort">
+        <section class="native-sort is-loading" data-initial-skeleton aria-busy="true">
           <div class="native-sort-content">
             <div>
               <p class="native-sort-label">SHOPIFY NATIVE SORT</p>

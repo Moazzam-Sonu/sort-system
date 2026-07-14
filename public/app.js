@@ -47,6 +47,16 @@ function renderProfile(user) {
   profileMenuName.textContent = user.username;
   profileRole.textContent = role;
   profileMenuRole.textContent = role;
+  profileMenu.classList.remove('is-loading');
+  profileMenu.removeAttribute('aria-busy');
+  profileTrigger.disabled = false;
+}
+
+function finishInitialLoading() {
+  document.querySelectorAll('[data-initial-skeleton]').forEach((element) => {
+    element.classList.remove('is-loading');
+    element.removeAttribute('aria-busy');
+  });
 }
 
 function setProfileMenuOpen(isOpen) {
@@ -145,15 +155,22 @@ async function pollBulkJob(jobId, label) {
 }
 
 async function startBulkSort({ request, label }) {
-  const { job } = await request();
-  feedback.renderBatchProgress(job, label);
-  void pollBulkJob(job.id, label);
+  feedback.showBatchLoading(label);
+  try {
+    const { job } = await request();
+    feedback.renderBatchProgress(job, label);
+    void pollBulkJob(job.id, label);
+  } catch (error) {
+    feedback.hideBatch();
+    throw error;
+  }
 }
 
 previewButton.addEventListener('click', async () => {
   const [collection] = picker.getSelected();
   if (!collection) return;
   feedback.setButtonBusy(previewButton, true, 'Building preview...', 'Preview order');
+  feedback.showPreviewLoading();
   document.querySelector('#result-panel').hidden = true;
   try {
     const { preview } = await api.previewRules({ collectionId: collection.id, rules: ruleBuilder.getRules() });
@@ -165,6 +182,7 @@ previewButton.addEventListener('click', async () => {
       ruleBuilder,
     });
   } catch (error) {
+    feedback.hidePreview();
     feedback.showResult({ failed: true, title: 'Preview could not be created', summary: error.message, logs: error.logs });
   } finally {
     previewButton.disabled = picker.getSelected().length === 0;
@@ -277,19 +295,24 @@ applyNativeButton.addEventListener('click', async () => {
 
 async function loadApp() {
   try {
-    const [sessionData, optionsData, collectionsData] = await Promise.all([
-      api.session(),
+    const sessionRequest = api.session().then((sessionData) => {
+      renderProfile(sessionData.user);
+      return sessionData;
+    });
+    const [optionsData, collectionsData] = await Promise.all([
       api.sortOptions(),
       api.collections(),
     ]);
-    renderProfile(sessionData.user);
+    await sessionRequest;
     sortOptions = optionsData.options;
     ruleBuilder.configure(optionsData.ruleFields);
     renderNativeSortOptions();
     picker.setCollections(collectionsData.collections);
     collectionStatus.classList.remove('is-loading');
     collectionStatus.textContent = `${collectionsData.collections.length.toLocaleString()} collections available`;
+    finishInitialLoading();
   } catch (error) {
+    finishInitialLoading();
     collectionStatus.classList.remove('is-loading');
     collectionStatus.textContent = 'The app could not finish loading';
     feedback.showResult({ failed: true, title: 'Shopify connection issue', summary: error.message });

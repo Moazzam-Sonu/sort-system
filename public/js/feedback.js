@@ -23,11 +23,45 @@ export function createFeedback() {
 
   function hidePreview() {
     previewPanel.hidden = true;
+    previewPanel.classList.remove('is-loading');
+    previewPanel.removeAttribute('aria-busy');
     applyButton.disabled = true;
+  }
+
+  function showPreviewLoading() {
+    previewPanel.hidden = false;
+    previewPanel.classList.add('is-loading');
+    previewPanel.setAttribute('aria-busy', 'true');
+    previewSummary.textContent = 'Building preview';
+    previewBadge.textContent = 'Loading';
+    previewBadge.classList.remove('is-neutral');
+    previewRules.replaceChildren();
+    for (let index = 0; index < 3; index += 1) {
+      const chip = document.createElement('span');
+      chip.textContent = 'Loading rule';
+      previewRules.append(chip);
+    }
+    previewWarnings.hidden = true;
+    previewProducts.replaceChildren();
+    for (let rowIndex = 0; rowIndex < 6; rowIndex += 1) {
+      const row = document.createElement('tr');
+      row.className = 'preview-skeleton-row';
+      for (let cellIndex = 0; cellIndex < 4; cellIndex += 1) {
+        const cell = document.createElement('td');
+        const line = document.createElement('span');
+        cell.append(line);
+        row.append(cell);
+      }
+      previewProducts.append(row);
+    }
+    applyButton.disabled = true;
+    previewPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function showPreview({ preview, rules, selectedCount, ruleBuilder }) {
     previewPanel.hidden = false;
+    previewPanel.classList.remove('is-loading');
+    previewPanel.removeAttribute('aria-busy');
     const orderSummary = preview.changed
       ? `${preview.movedCount.toLocaleString()} of ${preview.productCount.toLocaleString()} product positions will change.`
       : `All ${preview.productCount.toLocaleString()} products are already in this order.`;
@@ -111,6 +145,8 @@ export function createFeedback() {
 
   function renderBatchProgress(job, label) {
     bulkPanel.hidden = false;
+    bulkPanel.classList.remove('is-loading');
+    bulkPanel.removeAttribute('aria-busy');
     const percent = job.total === 0 ? 0 : Math.round((job.processed / job.total) * 100);
     bulkTitle.textContent = label;
     bulkSummary.textContent = `${job.processed.toLocaleString()} of ${job.total.toLocaleString()} collections processed. ${job.changed.toLocaleString()} changed, ${job.unchanged.toLocaleString()} already in order, ${job.failed.toLocaleString()} failed.`;
@@ -126,5 +162,33 @@ export function createFeedback() {
     bulkErrors.hidden = !job.errors?.length;
   }
 
-  return { applyButton, hidePreview, showPreview, showResult, setButtonBusy, renderBatchProgress };
+  function showBatchLoading(label) {
+    bulkPanel.hidden = false;
+    bulkPanel.classList.add('is-loading');
+    bulkPanel.setAttribute('aria-busy', 'true');
+    bulkTitle.textContent = label;
+    bulkSummary.textContent = 'Preparing batch job';
+    bulkStatus.textContent = 'Starting';
+    bulkStatus.classList.remove('is-neutral');
+    bulkBar.style.width = '34%';
+    bulkErrors.hidden = true;
+  }
+
+  function hideBatch() {
+    bulkPanel.hidden = true;
+    bulkPanel.classList.remove('is-loading');
+    bulkPanel.removeAttribute('aria-busy');
+  }
+
+  return {
+    applyButton,
+    hidePreview,
+    showPreviewLoading,
+    showPreview,
+    showResult,
+    setButtonBusy,
+    showBatchLoading,
+    hideBatch,
+    renderBatchProgress,
+  };
 }

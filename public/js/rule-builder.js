@@ -233,7 +233,10 @@ export function createRuleBuilder({ onRulesChange }) {
       return searchable.includes(query);
     });
     definitionList.replaceChildren();
-    if (!definitionsLoaded || definitionsLoading) return;
+    if (!definitionsLoaded || definitionsLoading) {
+      renderDefinitionSkeletons();
+      return;
+    }
     if (visibleDefinitions.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'metafield-definition-empty';
@@ -264,9 +267,28 @@ export function createRuleBuilder({ onRulesChange }) {
     }
   }
 
+  function renderDefinitionSkeletons() {
+    for (let index = 0; index < 5; index += 1) {
+      const row = document.createElement('div');
+      row.className = 'metafield-definition metafield-definition-skeleton';
+      row.setAttribute('aria-hidden', 'true');
+      const checkbox = document.createElement('span');
+      checkbox.className = 'metafield-skeleton-checkbox';
+      const details = document.createElement('span');
+      details.className = 'metafield-skeleton-details';
+      const title = document.createElement('i');
+      const meta = document.createElement('i');
+      details.append(title, meta);
+      row.append(checkbox, details);
+      definitionList.append(row);
+    }
+  }
+
   async function loadDefinitions() {
     if (definitionsLoaded || definitionsLoading) return;
     definitionsLoading = true;
+    definitionStatus.classList.add('is-loading');
+    definitionSearch.disabled = true;
     definitionStatus.textContent = 'Loading product metafields from Shopify...';
     renderDefinitions();
     try {
@@ -281,6 +303,8 @@ export function createRuleBuilder({ onRulesChange }) {
       definitionsLoaded = true;
     } finally {
       definitionsLoading = false;
+      definitionStatus.classList.remove('is-loading');
+      definitionSearch.disabled = false;
       renderDefinitions();
     }
   }
