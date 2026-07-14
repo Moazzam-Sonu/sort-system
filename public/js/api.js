@@ -19,6 +19,8 @@ function post(url, body) {
 
 export const api = {
   collections: () => request('/api/collections'),
+  metafieldDefinitions: () => request('/api/metafield-definitions'),
+  createMetafieldDefinition: (body) => post('/api/metafield-definitions', body),
   sortOptions: () => request('/api/sort-options'),
   previewRules: (body) => post('/api/rules/preview', body),
   applyRules: (body) => post('/api/rules/apply', body),

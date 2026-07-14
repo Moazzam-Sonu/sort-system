@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 import {
   applyCustomRules,
   applySort,
+  createProductMetafieldDefinition,
   listCollections,
+  listProductMetafieldDefinitions,
   previewCustomRules,
   RULE_FIELDS,
   SORT_OPTIONS,
@@ -27,6 +29,24 @@ app.get('/api/collections', async (request, response) => {
     response.json({ collections });
   } catch (error) {
     response.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/metafield-definitions', async (request, response) => {
+  try {
+    const definitions = await listProductMetafieldDefinitions();
+    response.json({ definitions });
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/metafield-definitions', async (request, response) => {
+  try {
+    const definition = await createProductMetafieldDefinition(request.body ?? {});
+    response.status(201).json({ definition });
+  } catch (error) {
+    response.status(400).json({ error: error.message });
   }
 });
 

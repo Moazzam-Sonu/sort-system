@@ -217,9 +217,8 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding: 1.5r
 footer a { color: var(--ink); font-weight: 800; text-decoration-color: var(--gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 footer a:hover { color: var(--accent); }
 code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .07); border-radius: 3px; }
-.metafield-dialog { width: min(540px, calc(100% - 2rem)); padding: 0; color: var(--ink); background: var(--cream); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1.7rem 5rem rgba(16, 31, 55, .25); }
+.metafield-dialog { width: min(620px, calc(100% - 2rem)); padding: 1.3rem; color: var(--ink); background: var(--cream); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1.7rem 5rem rgba(16, 31, 55, .25); }
 .metafield-dialog::backdrop { background: rgba(16, 31, 55, .48); backdrop-filter: blur(3px); }
-.metafield-dialog form { padding: 1.3rem; }
 .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .dialog-heading h2 { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 1.55rem; font-weight: 500; letter-spacing: -.04em; }
 .dialog-copy { margin: .75rem 0 1rem; color: var(--muted); font-size: .79rem; line-height: 1.5; }
@@ -230,8 +229,19 @@ code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .0
 .dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
 .dialog-error { margin: .75rem 0 0; padding: .55rem .65rem; color: var(--danger); font-size: .74rem; background: #fff0ef; border-radius: 7px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.15rem; }
+.dialog-actions-split { align-items: center; justify-content: space-between; }
+.dialog-actions-split > div { display: flex; align-items: center; gap: .6rem; }
 .dialog-cancel { padding: .75rem .85rem; color: var(--muted); font-weight: 700; background: transparent; border: 0; }
 .dialog-save { min-width: 150px; padding: .78rem .9rem; }
+.metafield-definition-status { min-height: 1.1rem; margin: .7rem 0 .45rem; color: var(--muted); font-size: .74rem; }
+.metafield-definition-list { max-height: 290px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfe; }
+.metafield-definition { display: flex; align-items: flex-start; gap: .65rem; padding: .7rem; cursor: pointer; border-bottom: 1px solid #e4e8ee; transition: background .16s ease; }
+.metafield-definition:last-child { border-bottom: 0; }
+.metafield-definition:hover { background: #f0f6f4; }
+.metafield-definition input { width: 1rem; height: 1rem; margin-top: .12rem; accent-color: var(--green); }
+.metafield-definition strong { display: block; font-size: .78rem; line-height: 1.35; }
+.metafield-definition span { display: block; margin-top: .1rem; color: var(--muted); font-size: .7rem; }
+.metafield-definition-empty { padding: 1rem; color: var(--muted); font-size: .78rem; text-align: center; }
 .swal-popup { padding: 1.7rem; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1.5rem 4rem rgba(16, 31, 55, .2); }
 .swal-popup .swal2-title { color: var(--ink); font-family: "Playfair Display", Georgia, serif; font-size: 1.7rem; font-weight: 500; letter-spacing: -.04em; }
 .swal-popup .swal2-html-container { color: var(--muted); font-family: "Manrope", sans-serif; font-size: .83rem; line-height: 1.5; }
@@ -278,4 +288,6 @@ code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .0
   footer { display: block; line-height: 1.8; }
   footer span { display: block; }
   .dialog-grid { grid-template-columns: 1fr; gap: 0; }
+  .dialog-actions-split { align-items: stretch; flex-direction: column; }
+  .dialog-actions-split > div { justify-content: flex-end; flex-wrap: wrap; }
 }

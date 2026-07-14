@@ -338,24 +338,49 @@
       class="metafield-dialog"
       aria-labelledby="metafield-dialog-title"
     >
-      <form id="metafield-form" method="dialog">
-        <div class="dialog-heading">
-          <div>
-            <p class="step-label">CUSTOM SORTING FIELD</p>
-            <h2 id="metafield-dialog-title">Add a custom metafield</h2>
-          </div>
-          <button
-            id="close-metafield-dialog"
-            class="close-result"
-            type="button"
-            aria-label="Close dialog"
-          >
-            x
-          </button>
+      <div class="dialog-heading">
+        <div>
+          <p class="step-label">CUSTOM SORTING FIELD</p>
+          <h2 id="metafield-dialog-title">Add custom data fields</h2>
         </div>
+        <button
+          id="close-metafield-dialog"
+          class="close-result"
+          type="button"
+          aria-label="Close dialog"
+        >
+          x
+        </button>
+      </div>
+
+      <section id="metafield-library" class="metafield-library">
         <p class="dialog-copy">
-          Enter the exact Shopify metafield namespace and key. Choose how its
-          values should be sorted.
+          Select one or more existing Shopify product metafields to use in your sorting rules.
+        </p>
+        <label class="dialog-label" for="metafield-definition-search">Search existing fields</label>
+        <input
+          id="metafield-definition-search"
+          class="dialog-input"
+          type="search"
+          placeholder="Search by field name, namespace, or key"
+          autocomplete="off"
+        />
+        <p id="metafield-definition-status" class="metafield-definition-status" aria-live="polite">Loading product metafields...</p>
+        <div id="metafield-definition-list" class="metafield-definition-list" aria-live="polite"></div>
+        <div class="dialog-actions dialog-actions-split">
+          <button id="create-more-metafield" class="dialog-cancel" type="button">Create more</button>
+          <div>
+            <button id="cancel-metafield-dialog" class="dialog-cancel" type="button">Cancel</button>
+            <button id="add-selected-metafields" class="sort-button dialog-save" type="button" disabled>
+              <span>Add selected (0)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <form id="metafield-form" hidden>
+        <p class="dialog-copy">
+          Create a Shopify product metafield definition. It will then appear under Custom metafields for sorting.
         </p>
         <label class="dialog-label" for="metafield-label"
           >Display name <span>Optional</span></label
@@ -398,15 +423,9 @@
         </select>
         <p id="metafield-form-error" class="dialog-error" hidden></p>
         <div class="dialog-actions">
-          <button
-            id="cancel-metafield-dialog"
-            class="dialog-cancel"
-            type="button"
-          >
-            Cancel
-          </button>
+          <button id="back-to-metafield-library" class="dialog-cancel" type="button">Back to existing fields</button>
           <button class="sort-button dialog-save" type="submit">
-            <span>Add sorting field</span>
+            <span>Create sorting field</span>
           </button>
         </div>
       </form>

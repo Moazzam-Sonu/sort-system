@@ -1,3 +1,4 @@
+import { api } from './api.js';
 import { customMetafieldId, isValidCustomMetafield } from './helpers.js';
 
 const STORAGE_KEY = 'collection-sorter-custom-metafields';
@@ -23,7 +24,12 @@ export function createRuleBuilder({ onRulesChange }) {
   const addRuleButton = document.querySelector('#add-rule-button');
   const openMetafieldButton = document.querySelector('#open-metafield-button');
   const dialog = document.querySelector('#metafield-dialog');
-  const form = document.querySelector('#metafield-form');
+  const library = document.querySelector('#metafield-library');
+  const definitionSearch = document.querySelector('#metafield-definition-search');
+  const definitionStatus = document.querySelector('#metafield-definition-status');
+  const definitionList = document.querySelector('#metafield-definition-list');
+  const addSelectedButton = document.querySelector('#add-selected-metafields');
+  const manualForm = document.querySelector('#metafield-form');
   const labelInput = document.querySelector('#metafield-label');
   const namespaceInput = document.querySelector('#metafield-namespace');
   const keyInput = document.querySelector('#metafield-key');
@@ -32,7 +38,11 @@ export function createRuleBuilder({ onRulesChange }) {
 
   let ruleFields = {};
   let customMetafields = loadCustomMetafields();
+  let definitions = [];
+  let definitionsLoaded = false;
+  let definitionsLoading = false;
   let pendingIndex = null;
+  let selectedDefinitionIds = new Set();
   let rules = [
     { field: 'RANGE', direction: 'ASC' },
     { field: 'TITLE', direction: 'ASC' },
@@ -74,6 +84,19 @@ export function createRuleBuilder({ onRulesChange }) {
 
   function notify() {
     onRulesChange(getRules());
+  }
+
+  function saveCustomMetafields() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customMetafields));
+  }
+
+  function addCustomMetafields(fields) {
+    for (const field of fields) {
+      const index = customMetafields.findIndex((item) => customMetafieldId(item) === customMetafieldId(field));
+      if (index >= 0) customMetafields[index] = field;
+      else customMetafields.push(field);
+    }
+    saveCustomMetafields();
   }
 
   function updatePresetState() {
@@ -123,7 +146,7 @@ export function createRuleBuilder({ onRulesChange }) {
 
     const addOption = document.createElement('option');
     addOption.value = '__ADD_METAFIELD__';
-    addOption.textContent = '+ Add custom metafield...';
+    addOption.textContent = '+ Add custom data fields...';
     select.append(addOption);
   }
 
@@ -194,22 +217,131 @@ export function createRuleBuilder({ onRulesChange }) {
     updatePresetState();
   }
 
-  function openDialog() {
-    form.reset();
+  function definitionId(definition) {
+    return `METAFIELD/${definition.namespace}/${definition.key}`;
+  }
+
+  function updateAddSelectedButton() {
+    addSelectedButton.disabled = selectedDefinitionIds.size === 0;
+    addSelectedButton.querySelector('span').textContent = `Add selected (${selectedDefinitionIds.size})`;
+  }
+
+  function renderDefinitions() {
+    const query = definitionSearch.value.trim().toLowerCase();
+    const visibleDefinitions = definitions.filter((definition) => {
+      const searchable = `${definition.label} ${definition.namespace}.${definition.key} ${definition.shopifyType}`.toLowerCase();
+      return searchable.includes(query);
+    });
+    definitionList.replaceChildren();
+    if (!definitionsLoaded || definitionsLoading) return;
+    if (visibleDefinitions.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'metafield-definition-empty';
+      empty.textContent = query ? 'No metafields match your search.' : 'No product metafield definitions were found.';
+      definitionList.append(empty);
+      return;
+    }
+
+    for (const definition of visibleDefinitions) {
+      const row = document.createElement('label');
+      row.className = 'metafield-definition';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedDefinitionIds.has(definitionId(definition));
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) selectedDefinitionIds.add(definitionId(definition));
+        else selectedDefinitionIds.delete(definitionId(definition));
+        updateAddSelectedButton();
+      });
+      const details = document.createElement('span');
+      const name = document.createElement('strong');
+      name.textContent = definition.label;
+      const meta = document.createElement('span');
+      meta.textContent = `${definition.namespace}.${definition.key}  /  ${definition.shopifyType.replaceAll('_', ' ')}`;
+      details.append(name, meta);
+      row.append(checkbox, details);
+      definitionList.append(row);
+    }
+  }
+
+  async function loadDefinitions() {
+    if (definitionsLoaded || definitionsLoading) return;
+    definitionsLoading = true;
+    definitionStatus.textContent = 'Loading product metafields from Shopify...';
+    renderDefinitions();
+    try {
+      const response = await api.metafieldDefinitions();
+      definitions = response.definitions || [];
+      definitionsLoaded = true;
+      definitionStatus.textContent = definitions.length
+        ? `${definitions.length} product metafield${definitions.length === 1 ? '' : 's'} available.`
+        : 'No product metafield definitions found. Create one below.';
+    } catch (error) {
+      definitionStatus.textContent = error.message;
+      definitionsLoaded = true;
+    } finally {
+      definitionsLoading = false;
+      renderDefinitions();
+    }
+  }
+
+  function showLibrary() {
+    manualForm.hidden = true;
+    library.hidden = false;
+    formError.hidden = true;
+    renderDefinitions();
+    updateAddSelectedButton();
+    definitionSearch.focus();
+  }
+
+  function showManualForm() {
+    library.hidden = true;
+    manualForm.hidden = false;
+    manualForm.reset();
     formError.hidden = true;
     formError.textContent = '';
-    dialog.showModal();
     labelInput.focus();
+  }
+
+  function openDialog() {
+    selectedDefinitionIds = new Set();
+    definitionSearch.value = '';
+    dialog.showModal();
+    showLibrary();
+    void loadDefinitions();
   }
 
   function closeDialog() {
     pendingIndex = null;
-    dialog.close();
+    if (dialog.open) dialog.close();
+  }
+
+  function addSelectedDefinitions() {
+    const selected = definitions
+      .filter((definition) => selectedDefinitionIds.has(definitionId(definition)))
+      .map((definition) => ({
+        label: definition.label.slice(0, 80),
+        namespace: definition.namespace,
+        key: definition.key,
+        type: definition.type,
+      }));
+    if (selected.length === 0) return;
+    addCustomMetafields(selected);
+    if (pendingIndex !== null) {
+      rules[pendingIndex] = { field: 'METAFIELD', metafield: { ...selected[0] }, direction: 'ASC' };
+    }
+    closeDialog();
+    render();
+    notify();
   }
 
   document.querySelector('#close-metafield-dialog').addEventListener('click', closeDialog);
   document.querySelector('#cancel-metafield-dialog').addEventListener('click', closeDialog);
-  form.addEventListener('submit', (event) => {
+  document.querySelector('#create-more-metafield').addEventListener('click', showManualForm);
+  document.querySelector('#back-to-metafield-library').addEventListener('click', showLibrary);
+  definitionSearch.addEventListener('input', renderDefinitions);
+  addSelectedButton.addEventListener('click', addSelectedDefinitions);
+  manualForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const metafield = {
       label: labelInput.value.trim(),
@@ -223,17 +355,35 @@ export function createRuleBuilder({ onRulesChange }) {
       return;
     }
     if (!metafield.label) metafield.label = `${metafield.namespace}.${metafield.key}`;
-    const duplicateIndex = customMetafields.findIndex((item) => customMetafieldId(item) === customMetafieldId(metafield));
-    if (duplicateIndex >= 0) customMetafields[duplicateIndex] = metafield;
-    else customMetafields.push(metafield);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customMetafields));
-
-    if (pendingIndex !== null) {
-      rules[pendingIndex] = { field: 'METAFIELD', metafield: { ...metafield }, direction: 'ASC' };
+    const submitButton = manualForm.querySelector('[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.querySelector('span').textContent = 'Creating...';
+    try {
+      const response = await api.createMetafieldDefinition(metafield);
+      const created = response.definition;
+      const sortingField = {
+        label: created.label.slice(0, 80),
+        namespace: created.namespace,
+        key: created.key,
+        type: created.type,
+      };
+      addCustomMetafields([sortingField]);
+      definitions = [...definitions.filter((definition) => definitionId(definition) !== definitionId(created)), created]
+        .sort((left, right) => left.label.localeCompare(right.label));
+      definitionsLoaded = true;
+      if (pendingIndex !== null) {
+        rules[pendingIndex] = { field: 'METAFIELD', metafield: { ...sortingField }, direction: 'ASC' };
+      }
+      closeDialog();
+      render();
+      notify();
+    } catch (error) {
+      formError.textContent = error.message;
+      formError.hidden = false;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.querySelector('span').textContent = 'Create sorting field';
     }
-    closeDialog();
-    render();
-    notify();
   });
   addRuleButton.addEventListener('click', () => {
     const nextField = Object.keys(ruleFields).find((field) => field !== 'METAFIELD' && !rules.some((rule) => rule.field === field));
