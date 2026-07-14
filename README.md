@@ -3,6 +3,7 @@
 An internal Shopify tool for safely sorting one or many product collections. It gives non-technical users a clean web interface to preview a new order before it changes Shopify.
 
 > This is a private operational tool, not a public Shopify app. Keep its URL, database, and Admin API credentials limited to trusted staff.
+<img width="1366" height="2225" alt="screencapture-127-0-0-1-3000-2026-07-14-20_38_57" src="https://github.com/user-attachments/assets/1bb138fe-eea1-4627-9a80-1703fb878e79" />
 
 ## What It Does
 
@@ -17,9 +18,13 @@ An internal Shopify tool for safely sorting one or many product collections. It 
 
 ## Demo Video
 
-> Replace the link below with the GitHub video URL after uploading the demo video to the repository's issue, pull request, or release.
 
-[Watch the Collection Sorter demo](PASTE_GITHUB_VIDEO_URL_HERE)
+
+https://github.com/user-attachments/assets/89d97e11-0e5a-4431-9aec-396db872b457
+
+
+
+
 
 ## Technology
 
