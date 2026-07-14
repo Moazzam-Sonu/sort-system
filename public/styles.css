@@ -40,12 +40,32 @@ button:disabled { cursor: not-allowed; }
 
 .app-shell { width: min(1060px, calc(100% - 2.5rem)); margin: 0 auto; padding: 1.6rem 0 2rem; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 3.5rem; }
+.topbar-actions { display: flex; align-items: center; gap: .8rem; }
 .brand { display: inline-flex; align-items: center; gap: .7rem; color: var(--ink); text-decoration: none; font-family: "Playfair Display", Georgia, serif; font-size: 1.35rem; letter-spacing: -.04em; }
 .brand strong { color: var(--accent); }
 .brand-mark { display: grid; width: 2.55rem; height: 2.55rem; place-items: center; color: var(--cream); background: var(--ink); border-radius: 9px 14px 9px 14px; box-shadow: 4px 4px 0 var(--gold); }
 .brand-mark svg { width: 1.45rem; height: 1.45rem; }
 .secure-note { display: flex; align-items: center; gap: .45rem; color: var(--muted); font-size: .78rem; }
 .secure-note span { width: .5rem; height: .5rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(45, 120, 92, .12); }
+.profile-menu { position: relative; }
+.profile-trigger { display: flex; min-width: 172px; align-items: center; gap: .55rem; padding: .34rem .45rem; color: var(--ink); text-align: left; background: rgba(255, 255, 255, .74); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 0 rgba(23, 42, 70, .04); transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.profile-trigger:hover, .profile-trigger[aria-expanded="true"] { background: #fff; border-color: #9cabbc; box-shadow: 0 4px 0 rgba(23, 42, 70, .08); }
+.profile-trigger:focus-visible, .profile-logout-button:focus-visible { outline: 3px solid rgba(228, 92, 53, .38); outline-offset: 2px; }
+.profile-avatar { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; color: #fff; font-family: "DM Mono", monospace; font-size: .66rem; font-weight: 500; letter-spacing: .04em; background: linear-gradient(135deg, var(--ink), #315b6a); border: 2px solid #f5d87f; border-radius: 9px 11px 9px 11px; }
+.profile-trigger-copy { display: grid; min-width: 0; gap: .03rem; flex: 1; }
+.profile-trigger-copy strong, .profile-summary strong { overflow: hidden; font-size: .72rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.profile-trigger-copy small { overflow: hidden; color: var(--muted); font-size: .61rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.profile-chevron { width: .85rem; height: .85rem; color: var(--muted); transition: transform .18s ease; }
+.profile-trigger[aria-expanded="true"] .profile-chevron { transform: rotate(180deg); }
+.profile-popover { position: absolute; z-index: 20; top: calc(100% + .55rem); right: 0; width: 230px; padding: .45rem; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1rem 2.5rem rgba(16, 31, 55, .16); transform-origin: top right; animation: picker-in .16s ease both; }
+.profile-summary { display: flex; align-items: center; gap: .65rem; padding: .5rem; }
+.profile-avatar-large { width: 36px; height: 36px; flex-basis: 36px; font-size: .72rem; }
+.profile-summary div { display: grid; min-width: 0; gap: .13rem; }
+.profile-summary span:not(.profile-avatar) { overflow: hidden; color: var(--muted); font-size: .67rem; text-overflow: ellipsis; white-space: nowrap; }
+.profile-menu-divider { height: 1px; margin: .25rem 0; background: #e8edf2; }
+.profile-logout-button { display: flex; width: 100%; align-items: center; gap: .5rem; padding: .6rem .55rem; color: #526176; font-size: .72rem; font-weight: 800; text-align: left; background: transparent; border: 0; border-radius: 7px; transition: color .16s ease, background .16s ease; }
+.profile-logout-button svg { width: 1rem; height: 1rem; }
+.profile-logout-button:hover:not(:disabled) { color: var(--danger); background: #fff0ef; }
 
 .intro { max-width: 760px; margin-bottom: 2rem; animation: rise .55s ease both; }
 .eyebrow, .step-label { margin: 0 0 .5rem; color: var(--accent); font-family: "DM Mono", monospace; font-size: .66rem; font-weight: 500; letter-spacing: .13em; }
@@ -264,6 +284,7 @@ code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .0
   .app-shell { width: min(100% - 1.3rem, 1060px); padding-top: 1rem; }
   .topbar { padding-bottom: 2.6rem; }
   .secure-note { display: none; }
+  .profile-trigger { min-width: 145px; }
   .sort-workspace { padding: 1.15rem; border-radius: 16px; }
   .workspace-heading { display: block; }
   .collection-status, .hint { margin-top: .45rem; text-align: left; }

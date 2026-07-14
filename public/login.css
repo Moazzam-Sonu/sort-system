@@ -1,0 +1,17 @@
+.login-shell { display: grid; width: min(100% - 2.5rem, 1060px); min-height: 100vh; place-items: center; margin: 0 auto; padding: 2rem 0; }
+.login-card { width: min(100%, 460px); padding: 2rem; background: rgba(255, 255, 255, .92); border: 1px solid rgba(220, 226, 235, .92); border-radius: 22px; box-shadow: 0 1.2rem 3.5rem rgba(16, 31, 55, .12); animation: rise .5s ease both; }
+.login-card .brand { margin-bottom: 2.4rem; }
+.login-copy h1 { max-width: 390px; margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: clamp(2rem, 6vw, 3.05rem); font-weight: 500; line-height: 1.04; letter-spacing: -.055em; }
+.login-copy h1 em { color: var(--accent); font-weight: 500; }
+.login-copy > p:last-child { margin: .85rem 0 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+.login-form { margin-top: 1.7rem; padding-top: 1.15rem; border-top: 1px solid var(--line); }
+.login-form label { display: block; margin: .85rem 0 .35rem; color: #526176; font-size: .72rem; font-weight: 800; }
+.login-form input { width: 100%; height: 43px; padding: 0 .7rem; color: var(--ink); background: #fbfcfe; border: 1px solid var(--line); border-radius: 8px; outline: none; }
+.login-form input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(37, 132, 103, .13); }
+.login-form .sort-button { width: 100%; margin-top: .6rem; }
+#error { min-height: 1.15rem; margin: .7rem 0 0; color: var(--danger); font-size: .74rem; font-weight: 700; }
+
+@media (max-width: 680px) {
+  .login-shell { width: min(100% - 1.3rem, 1060px); padding: 1rem 0; }
+  .login-card { padding: 1.35rem; border-radius: 16px; }
+}

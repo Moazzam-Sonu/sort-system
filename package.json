@@ -9,9 +9,12 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "db:migrate": "node src/database/migrate.js",
+    "users:create": "node src/database/create-user.js",
     "sort:range": "node src/reorder-collection.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "sweetalert2": "^11.26.25"

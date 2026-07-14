@@ -2,6 +2,7 @@ async function request(url, options) {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 401) window.location.assign('/login');
     const error = new Error(data.error || 'The request could not be completed.');
     error.logs = data.logs || [];
     throw error;
@@ -18,6 +19,8 @@ function post(url, body) {
 }
 
 export const api = {
+  session: () => request('/auth/session'),
+  logout: () => post('/auth/logout'),
   collections: () => request('/api/collections'),
   metafieldDefinitions: () => request('/api/metafield-definitions'),
   createMetafieldDefinition: (body) => post('/api/metafield-definitions', body),

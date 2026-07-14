@@ -35,7 +35,44 @@
           </span>
           <span>Collection <strong>Sorter</strong></span>
         </a>
-        <span class="secure-note"><span></span>Secure Shopify connection</span>
+        <div class="topbar-actions">
+          <span class="secure-note"><span></span>Secure Shopify connection</span>
+          <div id="profile-menu" class="profile-menu">
+            <button
+              id="profile-trigger"
+              class="profile-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-haspopup="menu"
+              aria-controls="profile-popover"
+            >
+              <span id="profile-avatar" class="profile-avatar" aria-hidden="true">--</span>
+              <span class="profile-trigger-copy">
+                <strong id="profile-name">Loading...</strong>
+                <small id="profile-role">Authenticated user</small>
+              </span>
+              <svg class="profile-chevron" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m5 7 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <div id="profile-popover" class="profile-popover" role="menu" hidden>
+              <div class="profile-summary">
+                <span id="profile-menu-avatar" class="profile-avatar profile-avatar-large" aria-hidden="true">--</span>
+                <div>
+                  <strong id="profile-menu-name">Loading...</strong>
+                  <span id="profile-menu-role">Authenticated user</span>
+                </div>
+              </div>
+              <div class="profile-menu-divider"></div>
+              <button id="logout-button" class="profile-logout-button" type="button" role="menuitem">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8M12 6l4 4-4 4M16 10H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
 
       <section class="intro">

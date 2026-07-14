@@ -9,10 +9,50 @@ const selectionSummary = document.querySelector('#selection-summary');
 const previewButton = document.querySelector('#preview-button');
 const nativeSortSelect = document.querySelector('#native-sort-select');
 const applyNativeButton = document.querySelector('#apply-native-button');
+const logoutButton = document.querySelector('#logout-button');
+const profileMenu = document.querySelector('#profile-menu');
+const profileTrigger = document.querySelector('#profile-trigger');
+const profilePopover = document.querySelector('#profile-popover');
+const profileAvatar = document.querySelector('#profile-avatar');
+const profileMenuAvatar = document.querySelector('#profile-menu-avatar');
+const profileName = document.querySelector('#profile-name');
+const profileMenuName = document.querySelector('#profile-menu-name');
+const profileRole = document.querySelector('#profile-role');
+const profileMenuRole = document.querySelector('#profile-menu-role');
 const feedback = createFeedback();
 
 let sortOptions = {};
 let previewKey = null;
+
+function userInitials(username) {
+  return username
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U';
+}
+
+function formatRole(role) {
+  return role ? `${role[0].toUpperCase()}${role.slice(1)} access` : 'Authenticated user';
+}
+
+function renderProfile(user) {
+  const initials = userInitials(user.username);
+  const role = formatRole(user.role);
+  profileAvatar.textContent = initials;
+  profileMenuAvatar.textContent = initials;
+  profileName.textContent = user.username;
+  profileMenuName.textContent = user.username;
+  profileRole.textContent = role;
+  profileMenuRole.textContent = role;
+}
+
+function setProfileMenuOpen(isOpen) {
+  profileTrigger.setAttribute('aria-expanded', String(isOpen));
+  profilePopover.hidden = !isOpen;
+}
 
 function invalidatePreview() {
   previewKey = null;
@@ -176,6 +216,29 @@ feedback.applyButton.addEventListener('click', async () => {
 });
 
 nativeSortSelect.addEventListener('change', updateActionState);
+profileTrigger.addEventListener('click', () => {
+  setProfileMenuOpen(profileTrigger.getAttribute('aria-expanded') !== 'true');
+});
+
+document.addEventListener('click', (event) => {
+  if (!profileMenu.contains(event.target)) setProfileMenuOpen(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    setProfileMenuOpen(false);
+    profileTrigger.focus();
+  }
+});
+
+logoutButton.addEventListener('click', async () => {
+  logoutButton.disabled = true;
+  try {
+    await api.logout();
+  } finally {
+    window.location.assign('/login');
+  }
+});
 applyNativeButton.addEventListener('click', async () => {
   const selected = picker.getSelected();
   if (selected.length === 0 || !nativeSortSelect.value) return;
@@ -214,7 +277,12 @@ applyNativeButton.addEventListener('click', async () => {
 
 async function loadApp() {
   try {
-    const [optionsData, collectionsData] = await Promise.all([api.sortOptions(), api.collections()]);
+    const [sessionData, optionsData, collectionsData] = await Promise.all([
+      api.session(),
+      api.sortOptions(),
+      api.collections(),
+    ]);
+    renderProfile(sessionData.user);
     sortOptions = optionsData.options;
     ruleBuilder.configure(optionsData.ruleFields);
     renderNativeSortOptions();

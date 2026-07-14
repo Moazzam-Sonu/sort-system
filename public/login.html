@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#133737" />
+    <title>Sign in | Collection Sorter</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/login.css" />
+  </head>
+  <body>
+    <div class="page-glow glow-one"></div>
+    <div class="page-glow glow-two"></div>
+
+    <main class="login-shell">
+      <section class="login-card" aria-labelledby="login-title">
+        <a class="brand" href="/login" aria-label="Collection Sorter sign in">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M9 8h14M9 16h10M9 24h6" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+              <path d="m21 20 3 3 5-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>Collection <strong>Sorter</strong></span>
+        </a>
+
+        <div class="login-copy">
+          <p class="eyebrow">PRIVATE WORKSPACE</p>
+          <h1 id="login-title">Sign in to manage <em>collections.</em></h1>
+          <p>Use the account created for you by the store administrator.</p>
+        </div>
+
+        <form id="login-form" class="login-form">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" required autofocus />
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <p id="error" role="alert"></p>
+          <button id="login-button" class="sort-button" type="submit">Sign in securely</button>
+        </form>
+      </section>
+    </main>
+    <script type="module" src="/login.js"></script>
+  </body>
+</html>
