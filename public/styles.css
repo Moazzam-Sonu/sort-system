@@ -226,6 +226,12 @@ code { padding: .1rem .25rem; color: var(--ink); background: rgba(23, 58, 57, .0
 .dialog-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.15rem; }
 .dialog-cancel { padding: .75rem .85rem; color: var(--muted); font-weight: 700; background: transparent; border: 0; }
 .dialog-save { min-width: 150px; padding: .78rem .9rem; }
+.swal-popup { padding: 1.7rem; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1.5rem 4rem rgba(16, 31, 55, .2); }
+.swal-popup .swal2-title { color: var(--ink); font-family: "Playfair Display", Georgia, serif; font-size: 1.7rem; font-weight: 500; letter-spacing: -.04em; }
+.swal-popup .swal2-html-container { color: var(--muted); font-family: "Manrope", sans-serif; font-size: .83rem; line-height: 1.5; }
+.swal-confirm, .swal-cancel { margin: .25rem; padding: .7rem .9rem; font-family: "Manrope", sans-serif; font-size: .78rem; font-weight: 800; border: 0; border-radius: 8px; cursor: pointer; }
+.swal-confirm { color: white; background: var(--accent); box-shadow: 0 3px 0 var(--accent-deep); }
+.swal-cancel { color: var(--ink); background: #edf1f6; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes picker-in { from { opacity: 0; transform: translateY(-5px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }

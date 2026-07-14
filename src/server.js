@@ -19,6 +19,7 @@ const bulkJobs = new Map();
 
 app.use(express.json({ limit: '512kb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/vendor', express.static(path.join(__dirname, '..', 'node_modules', 'sweetalert2', 'dist')));
 
 app.get('/api/collections', async (request, response) => {
   try {
