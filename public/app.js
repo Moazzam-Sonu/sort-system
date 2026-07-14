@@ -153,36 +153,36 @@ function renderCollectionTrigger() {
     return;
   }
 
-  if (selected.length === 1) {
-    const [collection] = selected;
-    const selectedElement = document.createElement('span');
-    selectedElement.className = 'selected-collection';
-    selectedElement.append(makeCollectionImage(collection));
-    const text = document.createElement('span');
-    text.className = 'selected-text';
-    const title = document.createElement('strong');
-    title.textContent = collection.title;
-    const details = document.createElement('small');
-    details.textContent = collectionDetails(collection);
-    text.append(title, details);
-    selectedElement.append(text);
-    trigger.append(selectedElement, makeChevron());
-    return;
-  }
-
   const selectedElement = document.createElement('span');
-  selectedElement.className = 'selected-collection';
-  const count = document.createElement('span');
-  count.className = 'collection-fallback';
-  count.textContent = selected.length > 99 ? '99+' : selected.length;
-  const text = document.createElement('span');
-  text.className = 'selected-text';
-  const title = document.createElement('strong');
-  title.textContent = `${selected.length.toLocaleString()} collections selected`;
-  const details = document.createElement('small');
-  details.textContent = 'Ready for batch sorting';
-  text.append(title, details);
-  selectedElement.append(count, text);
+  selectedElement.className = 'selected-collections';
+  const visibleCollections = selected.slice(0, 4);
+  for (const collection of visibleCollections) {
+    const chip = document.createElement('span');
+    chip.className = 'selected-chip';
+    chip.append(makeCollectionImage(collection));
+    const label = document.createElement('span');
+    label.className = 'selected-chip-label';
+    label.textContent = collection.title;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'remove-selected-chip';
+    remove.setAttribute('aria-label', `Remove ${collection.title}`);
+    remove.textContent = 'x';
+    remove.addEventListener('click', (event) => {
+      event.stopPropagation();
+      selectedCollectionIds.delete(collection.id);
+      updateSelectionState();
+      renderCollectionList(search.value);
+    });
+    chip.append(label, remove);
+    selectedElement.append(chip);
+  }
+  if (selected.length > visibleCollections.length) {
+    const more = document.createElement('span');
+    more.className = 'more-selected-chip';
+    more.textContent = `+${(selected.length - visibleCollections.length).toLocaleString()} more`;
+    selectedElement.append(more);
+  }
   trigger.append(selectedElement, makeChevron());
 }
 
@@ -563,7 +563,7 @@ async function loadCollections() {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Collections could not be loaded.');
   collections = data.collections;
-  trigger.disabled = false;
+  trigger.setAttribute('aria-disabled', 'false');
   collectionStatus.textContent = `${collections.length.toLocaleString()} collections available`;
   updateSelectionState();
   renderCollectionList();
@@ -578,7 +578,16 @@ async function loadApp() {
   }
 }
 
-trigger.addEventListener('click', () => (picker.hidden ? openPicker() : closePicker()));
+trigger.addEventListener('click', () => {
+  if (trigger.getAttribute('aria-disabled') === 'true') return;
+  picker.hidden ? openPicker() : closePicker();
+});
+trigger.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  if (trigger.getAttribute('aria-disabled') === 'true') return;
+  picker.hidden ? openPicker() : closePicker();
+});
 search.addEventListener('input', () => renderCollectionList(search.value));
 selectAllCollectionsButton.addEventListener('click', () => {
   selectedCollectionIds = new Set(collections.map((collection) => collection.id));
